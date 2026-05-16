@@ -17,7 +17,16 @@ const RUN_STEPS = [
   "Building explanation",
   "Finalizing recommendation"
 ];
+const SUGGESTED_QUERIES = [
+  { label: "Sony WH-1000XM5", kind: "product" },
+  { label: "Patagonia Nano Puff", kind: "product" },
+  { label: "Costco groceries", kind: "card pick" },
+  { label: "Best card for gas", kind: "category" },
+  { label: "Starbucks", kind: "card pick" },
+  { label: "Garmin Fenix 8", kind: "product" }
+];
 const appLogger = logger.child({ module: "moneymaker-app" });
+type ActiveView = "search" | "wallet" | "results";
 
 type ApiState =
   | { status: "idle"; data: null; error: null }
@@ -31,6 +40,7 @@ export function MoneymakerApp() {
     cards.slice(0, 4).map((card) => card.id)
   );
   const [apiState, setApiState] = useState<ApiState>({ status: "idle", data: null, error: null });
+  const [activeView, setActiveView] = useState<ActiveView>("search");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
 
   useEffect(() => {
@@ -143,149 +153,277 @@ export function MoneymakerApp() {
   return (
     <main className={styles.shell}>
       <section className={styles.workbench}>
-        <div className={styles.header}>
-          <div>
-            <p className={styles.kicker}>Moneymaker</p>
-            <h1>Wallet-aware checkout math</h1>
-          </div>
-          <div className={styles.trust}>
-            <ShieldCheck size={18} />
-            <span>No card numbers</span>
-          </div>
-        </div>
+        <header className={styles.topbar}>
+          <button className={styles.brand} type="button" onClick={() => setActiveView("search")} aria-label="Moneymaker home">
+            <span>m</span>
+            <strong>moneymaker</strong>
+          </button>
+          <nav className={styles.nav} aria-label="Primary">
+            <button
+              className={activeView === "search" ? styles.navActive : ""}
+              type="button"
+              onClick={() => setActiveView("search")}
+              aria-current={activeView === "search" ? "page" : undefined}
+            >
+              <Search size={16} />
+              Search
+            </button>
+            <button
+              className={activeView === "wallet" ? styles.navActive : ""}
+              type="button"
+              onClick={() => setActiveView("wallet")}
+              aria-current={activeView === "wallet" ? "page" : undefined}
+            >
+              <CreditCard size={16} />
+              Wallet
+            </button>
+            <button
+              className={activeView === "results" ? styles.navActive : ""}
+              type="button"
+              onClick={() => setActiveView("results")}
+              aria-current={activeView === "results" ? "page" : undefined}
+            >
+              <ShieldCheck size={16} />
+              Results
+            </button>
+          </nav>
+        </header>
 
-        <div className={styles.grid}>
-          <section className={styles.leftRail} aria-label="Wallet">
-            <div className={styles.sectionTitle}>
-              <WalletCards size={18} />
-              <h2>Wallet</h2>
-              <span>{selectedCardIds.length} selected</span>
-            </div>
+        {activeView === "search" ? (
+          <>
+            <section className={styles.hero}>
+              <div className={styles.heroCopy}>
+                <p className={styles.kicker}>AI-powered checkout agent</p>
+                <h1>
+                  What are you <em>buying?</em>
+                </h1>
+                <p>
+                  A product, a brand, a store. The agent compares retailer prices, wallet rewards, and offers before
+                  choosing the card that actually wins.
+                </p>
 
-            <div className={styles.cardGrid}>
-              {cards.map((card) => {
-                const selected = selectedCardIds.includes(card.id);
-                return (
-                  <button
-                    className={`${styles.cardButton} ${selected ? styles.cardSelected : ""}`}
-                    key={card.id}
-                    onClick={() => toggleCard(card.id)}
-                    type="button"
-                    aria-pressed={selected}
-                  >
-                    <span
-                      className={styles.cardArt}
-                      style={{ background: card.art.background, color: card.art.foreground }}
+                <form className={styles.searchPanel} onSubmit={submitRecommendation}>
+                  <label htmlFor="product-query">Product search</label>
+                  <div className={styles.searchRow}>
+                    <Search className={styles.searchIcon} size={22} />
+                    <input
+                      id="product-query"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder='Try "Sony WH-1000XM5" or "Costco" or "best card for dining"'
+                    />
+                    <button disabled={apiState.status === "loading"} type="submit">
+                      {apiState.status === "loading" ? (
+                        <Loader2 className={styles.spin} size={18} />
+                      ) : (
+                        <Search size={18} />
+                      )}
+                      <span>Ask</span>
+                    </button>
+                  </div>
+                </form>
+
+                <div className={styles.suggested} aria-label="Suggested searches">
+                  <span>Try:</span>
+                  {SUGGESTED_QUERIES.map((suggestion) => (
+                    <button
+                      key={`${suggestion.label}-${suggestion.kind}`}
+                      type="button"
+                      onClick={() => setQuery(suggestion.label)}
                     >
-                      <CreditCard size={18} />
-                      <span>{card.network}</span>
-                    </span>
-                    <span className={styles.cardText}>
-                      <strong>{card.displayName}</strong>
-                      <span>{card.issuer}</span>
-                    </span>
-                    <span className={styles.check}>{selected ? <Check size={16} /> : null}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className={styles.mainPanel}>
-            <form className={styles.searchPanel} onSubmit={submitRecommendation}>
-              <label htmlFor="product-query">Product</label>
-              <div className={styles.searchRow}>
-                <Search className={styles.searchIcon} size={20} />
-                <input
-                  id="product-query"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Paste a product URL or enter a product name"
-                />
-                <button disabled={apiState.status === "loading"} type="submit">
-                  {apiState.status === "loading" ? <Loader2 className={styles.spin} size={18} /> : <Search size={18} />}
-                  <span>Rank cards</span>
-                </button>
-              </div>
-            </form>
-
-            {apiState.error ? <div className={styles.error}>{apiState.error}</div> : null}
-            {recommendation?.warnings.length ? (
-              <div className={styles.warningStack} aria-label="Recommendation warnings">
-                {recommendation.warnings.map((warning) => (
-                  <div className={styles.warning} key={warning.code}>
-                    <strong>{warning.code.replaceAll("_", " ").toLowerCase()}</strong>
-                    <span>{warning.message}</span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            <div className={styles.statusAndSummary}>
-              <section className={styles.statusPanel} aria-label="Agent status">
-                <div className={styles.sectionTitle}>
-                  <Loader2 className={apiState.status === "loading" ? styles.spin : ""} size={18} />
-                  <h2>Agent run</h2>
+                      {suggestion.label}
+                      <em>{suggestion.kind}</em>
+                    </button>
+                  ))}
                 </div>
-                <StatusList
-                  activeIndex={apiState.status === "loading" ? loadingStepIndex : null}
-                  items={apiState.status === "loading" ? RUN_STEPS : recommendation?.statusLog ?? idleStatus()}
-                  mode={apiState.status === "loading" ? "loading" : recommendation ? "complete" : "idle"}
-                />
-              </section>
+              </div>
 
-              <section className={styles.summaryPanel}>
-                <p className={styles.kicker}>Recommendation</p>
-                <h2>{recommendation?.product.title ?? "Ready for a product"}</h2>
-                <p>{recommendation?.explanation ?? "Run the demo query to compare prices, rewards, and offers."}</p>
-                {recommendation ? (
-                  <div className={styles.qualityLine}>
-                    <span>Source: {sourceLabel(recommendation.dataQuality.resultSource)}</span>
-                    <span>Live check: {recommendation.dataQuality.liveLookupSucceeded ? "succeeded" : "not used"}</span>
-                    {recommendation.dataQuality.demoMode ? <span>Demo mode</span> : null}
-                  </div>
-                ) : null}
-              </section>
+              <aside className={styles.savingsCard} aria-label="Savings summary">
+                <p>Saved YTD</p>
+                <strong>$1,247</strong>
+                <span>
+                  across 47 purchases with {selectedCards.length} wallet cards ready for this run.
+                </span>
+                <div aria-hidden="true" />
+              </aside>
+            </section>
+
+            <div className={styles.liveLabel}>
+              <span />
+              <p>Live run - see what the agent does</p>
             </div>
 
-            <section className={styles.results} aria-label="Ranked options">
-              {(recommendation?.results ?? []).map((result) => (
-                <article className={styles.resultCard} key={`${result.retailerId}-${result.cardId}`}>
-                  <div className={styles.resultRank}>#{result.rank}</div>
-                  <div className={styles.resultMain}>
-                    <div className={styles.resultHeader}>
-                      <div>
-                        <h3>{result.retailerName}</h3>
-                        <p>{result.cardName}</p>
-                      </div>
-                      <div className={styles.priceBlock}>
-                        <span>{formatCurrency(result.effectivePrice)}</span>
-                        <small>effective</small>
-                      </div>
-                    </div>
+            <Alerts apiState={apiState} recommendation={recommendation} />
 
-                    <div className={styles.mathRows}>
-                      <MathRow label="List price" value={result.listPrice} tone="base" />
-                      {result.lineItems.map((lineItem) => (
-                        <MathRow key={`${lineItem.kind}-${lineItem.label}`} label={lineItem.label} value={lineItem.amount} />
-                      ))}
-                    </div>
+            <div className={styles.grid}>
+              <WalletPanel selectedCardIds={selectedCardIds} onToggleCard={toggleCard} />
 
-                    <div className={styles.resultFooter}>
-                      <span className={`${styles.badge} ${styles[result.source]}`}>{sourceLabel(result.source)}</span>
-                      <span>{formatCurrency(result.savings)} value found</span>
-                      <a href={result.url} target="_blank" rel="noreferrer">
-                        Open <ArrowUpRight size={15} />
-                      </a>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </section>
+              <section className={styles.mainPanel}>
+                <RunPanel apiState={apiState} loadingStepIndex={loadingStepIndex} recommendation={recommendation} />
+              </section>
+            </div>
+          </>
+        ) : null}
+
+        {activeView === "wallet" ? (
+          <section className={styles.walletOnly}>
+            <WalletPanel selectedCardIds={selectedCardIds} onToggleCard={toggleCard} expanded />
           </section>
-        </div>
+        ) : null}
+
+        {activeView === "results" ? (
+          <>
+            <div className={styles.liveLabel}>
+              <span />
+              <p>Results - ranked card choices</p>
+            </div>
+            <Alerts apiState={apiState} recommendation={recommendation} />
+            <section className={styles.resultsOnly}>
+              <RunPanel apiState={apiState} loadingStepIndex={loadingStepIndex} recommendation={recommendation} />
+            </section>
+          </>
+        ) : null}
       </section>
     </main>
+  );
+}
+
+function Alerts({ apiState, recommendation }: { apiState: ApiState; recommendation: Recommendation | null }) {
+  return (
+    <>
+      {apiState.error ? <div className={styles.error}>{apiState.error}</div> : null}
+      {recommendation?.warnings.length ? (
+        <div className={styles.warningStack} aria-label="Recommendation warnings">
+          {recommendation.warnings.map((warning) => (
+            <div className={styles.warning} key={warning.code}>
+              <strong>{warning.code.replaceAll("_", " ").toLowerCase()}</strong>
+              <span>{warning.message}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function WalletPanel({
+  selectedCardIds,
+  onToggleCard,
+  expanded = false
+}: {
+  selectedCardIds: string[];
+  onToggleCard: (cardId: string) => void;
+  expanded?: boolean;
+}) {
+  return (
+    <section className={`${styles.leftRail} ${expanded ? styles.walletExpanded : ""}`} aria-label="Wallet">
+      <div className={styles.sectionTitle}>
+        <WalletCards size={18} />
+        <h2>Wallet</h2>
+        <span>{selectedCardIds.length} selected</span>
+      </div>
+
+      <div className={styles.cardGrid}>
+        {cards.map((card) => {
+          const selected = selectedCardIds.includes(card.id);
+          return (
+            <button
+              className={`${styles.cardButton} ${selected ? styles.cardSelected : ""}`}
+              key={card.id}
+              onClick={() => onToggleCard(card.id)}
+              type="button"
+              aria-pressed={selected}
+            >
+              <span className={styles.cardArt} style={{ background: card.art.background, color: card.art.foreground }}>
+                <CreditCard size={18} />
+                <span>{card.network}</span>
+              </span>
+              <span className={styles.cardText}>
+                <strong>{card.displayName}</strong>
+                <span>{card.issuer}</span>
+              </span>
+              <span className={styles.check}>{selected ? <Check size={16} /> : null}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function RunPanel({
+  apiState,
+  loadingStepIndex,
+  recommendation
+}: {
+  apiState: ApiState;
+  loadingStepIndex: number;
+  recommendation: Recommendation | null;
+}) {
+  return (
+    <>
+      <div className={styles.statusAndSummary}>
+        <section className={styles.statusPanel} aria-label="Agent status">
+          <div className={styles.sectionTitle}>
+            <Loader2 className={apiState.status === "loading" ? styles.spin : ""} size={18} />
+            <h2>Agent run</h2>
+          </div>
+          <StatusList
+            activeIndex={apiState.status === "loading" ? loadingStepIndex : null}
+            items={apiState.status === "loading" ? RUN_STEPS : recommendation?.statusLog ?? idleStatus()}
+            mode={apiState.status === "loading" ? "loading" : recommendation ? "complete" : "idle"}
+          />
+        </section>
+
+        <section className={styles.summaryPanel}>
+          <p className={styles.kicker}>Recommendation</p>
+          <h2>{recommendation?.product.title ?? "Ready for a product"}</h2>
+          <p>{recommendation?.explanation ?? "Run the demo query to compare prices, rewards, and offers."}</p>
+          {recommendation ? (
+            <div className={styles.qualityLine}>
+              <span>Source: {sourceLabel(recommendation.dataQuality.resultSource)}</span>
+              <span>Live check: {recommendation.dataQuality.liveLookupSucceeded ? "succeeded" : "not used"}</span>
+              {recommendation.dataQuality.demoMode ? <span>Demo mode</span> : null}
+            </div>
+          ) : null}
+        </section>
+      </div>
+
+      <section className={styles.results} aria-label="Ranked options">
+        {(recommendation?.results ?? []).map((result) => (
+          <article className={styles.resultCard} key={`${result.retailerId}-${result.cardId}`}>
+            <div className={styles.resultRank}>#{result.rank}</div>
+            <div className={styles.resultMain}>
+              <div className={styles.resultHeader}>
+                <div>
+                  <h3>{result.retailerName}</h3>
+                  <p>{result.cardName}</p>
+                </div>
+                <div className={styles.priceBlock}>
+                  <span>{formatCurrency(result.effectivePrice)}</span>
+                  <small>effective</small>
+                </div>
+              </div>
+
+              <div className={styles.mathRows}>
+                <MathRow label="List price" value={result.listPrice} tone="base" />
+                {result.lineItems.map((lineItem) => (
+                  <MathRow key={`${lineItem.kind}-${lineItem.label}`} label={lineItem.label} value={lineItem.amount} />
+                ))}
+              </div>
+
+              <div className={styles.resultFooter}>
+                <span className={`${styles.badge} ${styles[result.source]}`}>{sourceLabel(result.source)}</span>
+                <span>{formatCurrency(result.savings)} value found</span>
+                <a href={result.url} target="_blank" rel="noreferrer">
+                  Open <ArrowUpRight size={15} />
+                </a>
+              </div>
+            </div>
+          </article>
+        ))}
+      </section>
+    </>
   );
 }
 
