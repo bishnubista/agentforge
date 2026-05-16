@@ -3,10 +3,10 @@
 :root {
   --font-serif: "Fraunces", Georgia, serif;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --background: #faf8f5;
-  --foreground: #161d1a;
-  --muted: #5a615d;
-  --line: #e0d9cf;
+  --background: #ffffff;
+  --foreground: #0d0d0d;
+  --muted: #8c8c8c;
+  --line: #e5e5e5;
   --panel: #ffffff;
   --panel-soft: #f2ece2;
   --accent: #0a2e25;
@@ -14,7 +14,7 @@
   --accent-soft: #dceee7;
   --green-900: #0a2e25;
   --green-800: #0f4538;
-  --green-700: #21634f;
+  --green-700: #178255;
   --green-100: #dceee7;
   --cream-50: #fbf8f1;
   --cream-100: #f5efe2;

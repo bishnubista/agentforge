@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowUpRight, BarChart3, Check, CreditCard, Loader2, Search, Sparkles, WalletCards } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, Check, CreditCard, Loader2, Search, WalletCards } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cards } from "@/lib/data";
 import { logger } from "@/lib/logger";
@@ -10,20 +10,30 @@ import styles from "./moneymaker-app.module.css";
 const STORAGE_KEY = "moneymaker:selected-cards";
 const DEFAULT_QUERY = "";
 const RUN_STEPS = [
-  "Identifying product",
-  "Checking live and fallback coverage",
-  "Filtering retailer prices",
-  "Scoring wallet rewards",
-  "Building explanation",
-  "Finalizing recommendation"
+  "Identifying product and specifications",
+  "Scanning retailers across the web for live pricing",
+  "Reading your wallet",
+  "Cross-referencing active offers and portal bonuses",
+  "Evaluating cashback and points value per retailer",
+  "Scoring all options to find best effective price"
 ];
-const SUGGESTED_QUERIES = [
-  { label: "Sony WH-1000XM5", kind: "product" },
-  { label: "Patagonia Nano Puff", kind: "product" },
-  { label: "Costco groceries", kind: "card pick" },
-  { label: "Best card for gas", kind: "category" },
-  { label: "Starbucks", kind: "card pick" },
-  { label: "Garmin Fenix 8", kind: "product" }
+const PRIMARY_SUGGESTIONS = ["Patagonia Neo Puff Jacket", "AirPods Pro", "Flight SF to NYC", "Whole Foods"];
+const EXTRA_SUGGESTIONS = [
+  "Best card for dining",
+  "Best card for gas",
+  "Costco",
+  "Best Buy",
+  "Hotel in Miami",
+  "Nike Air Max",
+  "Dyson V15",
+  "Amazon Prime subscription"
+];
+const RECENT_RECOMMENDATIONS = [
+  { purchase: "AirPods Pro", pick: "-", saved: "$", when: "Just now" },
+  { purchase: "Patagonia Neo Puff Jacket", pick: "-", saved: "$", when: "Just now" },
+  { purchase: "Best card for gas", pick: "Citi Custom Cash", saved: "$", when: "Just now" },
+  { purchase: "on cloudtech shoes", pick: "On Official Website · Gold Card (American Express)", saved: "$", when: "Just now" },
+  { purchase: "Garmin Fenix 8", pick: "Amazon · Gold Card (American Express)", saved: "$", when: "Just now" }
 ];
 const appLogger = logger.child({ module: "moneymaker-app" });
 type ActiveView = "search" | "wallet" | "results";
@@ -42,6 +52,7 @@ export function MoneymakerApp() {
   const [apiState, setApiState] = useState<ApiState>({ status: "idle", data: null, error: null });
   const [activeView, setActiveView] = useState<ActiveView>("search");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
+  const [suggestionsExpanded, setSuggestionsExpanded] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -193,19 +204,13 @@ export function MoneymakerApp() {
 
         {activeView === "search" ? (
           <>
-            <section className={styles.hero}>
+            <section className={`${styles.hero} ${apiState.status !== "idle" || recommendation ? styles.heroCompact : ""}`}>
               <div className={styles.heroCopy}>
-                <p className={styles.kicker}>
-                  <Sparkles size={14} />
-                  AI-Powered Agent
-                </p>
+                <div className={styles.heroKicker}>Rewardr Agent</div>
                 <h1>
-                  What are you <em>buying?</em>
+                  Stop leaving money <em>on the table.</em>
                 </h1>
-                <p>
-                  A product, a brand, a store. The AI agent searches the web in real-time, compares prices, and picks
-                  the best card from your wallet.
-                </p>
+                <p>Shopping for something or paying somewhere? Rewardr AI agents find the best deal and right card for you.</p>
 
                 <form className={styles.searchPanel} onSubmit={submitRecommendation}>
                   <label htmlFor="product-query">Product search</label>
@@ -215,11 +220,11 @@ export function MoneymakerApp() {
                       id="product-query"
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
-                      placeholder='Try "Sony WH-1000XM5" or "Costco" or "best card for dining"'
+                      placeholder="Search a product, brand, or store..."
                     />
                     <button disabled={apiState.status === "loading"} type="submit">
                       {apiState.status === "loading" ? (
-                        <Loader2 className={styles.spin} size={18} />
+                        <span>Thinking</span>
                       ) : (
                         <>
                           <span>Ask</span>
@@ -230,30 +235,50 @@ export function MoneymakerApp() {
                   </div>
                 </form>
 
-                <div className={styles.suggested} aria-label="Suggested searches">
-                  <span>Try:</span>
-                  {SUGGESTED_QUERIES.map((suggestion) => (
+                <div className={styles.suggestionStack} aria-label="Suggested searches">
+                  <div className={styles.suggested}>
+                    <span>Try:</span>
+                    {PRIMARY_SUGGESTIONS.map((suggestion) => (
+                      <button key={suggestion} type="button" onClick={() => setQuery(suggestion)}>
+                        {suggestion}
+                      </button>
+                    ))}
                     <button
-                      key={`${suggestion.label}-${suggestion.kind}`}
                       type="button"
-                      onClick={() => setQuery(suggestion.label)}
+                      className={styles.moreButton}
+                      onClick={() => setSuggestionsExpanded((current) => !current)}
                     >
-                      {suggestion.label}
-                      <em>{suggestion.kind}</em>
+                      {suggestionsExpanded ? "Less ↑" : "More ↓"}
                     </button>
-                  ))}
+                  </div>
+                  {suggestionsExpanded ? (
+                    <div className={styles.moreSuggestions}>
+                      {EXTRA_SUGGESTIONS.map((suggestion) => (
+                        <button key={suggestion} type="button" onClick={() => setQuery(suggestion)}>
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
+                <button className={styles.walletPill} type="button" onClick={() => setActiveView("wallet")}>
+                  <span aria-hidden="true" />
+                  {selectedCards.length} cards in your wallet
+                  <em>add more →</em>
+                </button>
               </div>
             </section>
-
-            <LiveExample selectedCardCount={selectedCards.length} />
 
             <Alerts apiState={apiState} recommendation={recommendation} />
 
             {apiState.status !== "idle" || recommendation ? (
-              <section className={styles.searchRun}>
-                <RunPanel apiState={apiState} loadingStepIndex={loadingStepIndex} recommendation={recommendation} />
-              </section>
+              <SearchResultPanel
+                apiState={apiState}
+                loadingStepIndex={loadingStepIndex}
+                recommendation={recommendation}
+                selectedCardCount={selectedCards.length}
+                onSearchAgain={() => setApiState({ status: "idle", data: null, error: null })}
+              />
             ) : null}
           </>
         ) : null}
@@ -266,8 +291,16 @@ export function MoneymakerApp() {
               title="Cards we'll optimize across."
               copy="Just the card types - we never ask for numbers, logins, or balances. Add or remove anytime."
             />
-            <WalletStats selectedCardCount={selectedCards.length} />
+            <WalletStats selectedCards={selectedCards} />
+            <div className={styles.dividerTitle}>Edit your wallet</div>
             <WalletPanel selectedCardIds={selectedCardIds} onToggleCard={toggleCard} expanded />
+            <div className={styles.walletAction}>
+              <strong>{selectedCards.length} cards selected</strong>
+              <button type="button" onClick={() => setActiveView("search")}>
+                Continue to search
+                <ArrowRight size={15} />
+              </button>
+            </div>
           </section>
         ) : null}
 
@@ -281,73 +314,16 @@ export function MoneymakerApp() {
             />
             <DashboardStats />
             <Alerts apiState={apiState} recommendation={recommendation} />
-            <section className={styles.resultsOnly}>
-              <RunPanel apiState={apiState} loadingStepIndex={loadingStepIndex} recommendation={recommendation} />
-            </section>
+            <RecentRecommendations recommendation={recommendation} />
           </>
         ) : null}
 
         <footer className={styles.footer}>
-          <span>Rewardr - AI-powered savings agent</span>
-          <span>No PII - No card numbers - Honest math</span>
+          <span>Rewardr Agent · AI-powered savings agent</span>
+          <span>No PII · No card numbers · Honest math</span>
         </footer>
       </section>
     </main>
-  );
-}
-
-function LiveExample({ selectedCardCount }: { selectedCardCount: number }) {
-  const prices = [
-    { retailer: "Walmart", price: "$189", best: true },
-    { retailer: "Apple", price: "$249" },
-    { retailer: "Best Buy", price: "$229" },
-    { retailer: "Amazon", price: "$199" }
-  ];
-
-  return (
-    <section className={styles.liveExample} aria-label="Live example">
-      <div className={styles.liveMain}>
-        <div className={styles.liveLabel}>
-          <span />
-          <p>
-            Live example &middot; <em>see what the agent does</em>
-          </p>
-        </div>
-        <div className={styles.exampleCard}>
-          <div className={styles.exampleHeader}>
-            <strong>&quot;AirPods Pro 2, USB-C model&quot;</strong>
-            <span>
-              12 retailers scanned
-              <em>{selectedCardCount} cards evaluated</em>
-            </span>
-          </div>
-          <div className={styles.priceGrid}>
-            {prices.map((item) => (
-              <div className={item.best ? styles.bestPrice : ""} key={item.retailer}>
-                <span>{item.retailer}</span>
-                <strong>{item.price}</strong>
-              </div>
-            ))}
-          </div>
-          <div className={styles.exampleResult}>
-            <strong>
-              <Sparkles size={14} />
-              Buy at Walmart. Use Chase Freedom Flex.
-            </strong>
-            <span>
-              You save
-              <em>$68</em>
-            </span>
-          </div>
-        </div>
-      </div>
-      <aside className={styles.savingsCard} aria-label="Savings summary">
-        <p>Saved YTD</p>
-        <strong>$1,247</strong>
-        <span>across 47 purchases - averaging 5% return on tracked spend.</span>
-        <div aria-hidden="true" />
-      </aside>
-    </section>
   );
 }
 
@@ -374,32 +350,44 @@ function ViewIntro({
   );
 }
 
-function WalletStats({ selectedCardCount }: { selectedCardCount: number }) {
-  const previewCards = cards.slice(0, 4);
+function WalletStats({ selectedCards }: { selectedCards: typeof cards }) {
+  const previewCards = selectedCards.slice(0, 4);
+  const issuerCount = new Set(selectedCards.map((card) => card.issuer)).size;
 
   return (
     <section className={styles.walletStats} aria-label="Wallet summary">
-      <div className={styles.walletStatCopy}>
-        <span>In your wallet</span>
-        <strong>
-          {selectedCardCount}
-          <em>cards</em>
-        </strong>
-        <p>
-          The agent evaluates every card on every query - category bonuses, rotating calendars, portal multipliers, and
-          active offers.
-        </p>
-      </div>
-      <div className={styles.issuerCount}>
-        <span>Issuers covered</span>
-        <strong>{new Set(previewCards.map((card) => card.issuer)).size}</strong>
+      <div className={styles.walletStatHeader}>
+        <div className={styles.walletStatCopy}>
+          <span>In your wallet</span>
+          <strong>
+            {selectedCards.length}
+            <em>cards</em>
+          </strong>
+          <p>
+            The agent evaluates every card on every query - category bonuses, rotating calendars, portal multipliers, and
+            active offers.
+          </p>
+        </div>
+        <div className={styles.issuerCount}>
+          <span>Issuers covered</span>
+          <strong>{issuerCount}</strong>
+        </div>
       </div>
       <div className={styles.walletPreview}>
-        {previewCards.map((card) => (
-          <div className={styles.walletMiniCard} key={card.id} style={{ background: card.art.background, color: card.art.foreground }}>
+        {previewCards.map((card, index) => (
+          <div
+            className={styles.walletMiniCard}
+            key={card.id}
+            style={{
+              background: card.art.background,
+              color: card.art.foreground,
+              "--card-angle": `${(index - 1.5) * 5}deg`,
+              "--card-shift": `${index * -14}px`
+            } as React.CSSProperties}
+          >
             <span>{card.issuer}</span>
-            <strong>{card.displayName.replace(card.issuer, "").trim() || card.displayName}</strong>
-            <em>{card.network.toUpperCase()}</em>
+            <strong>{shortCardName(card)}</strong>
+            <em>{rewardSummary(card)}</em>
           </div>
         ))}
       </div>
@@ -476,12 +464,13 @@ function WalletPanel({
               aria-pressed={selected}
             >
               <span className={styles.cardArt} style={{ background: card.art.background, color: card.art.foreground }}>
-                <CreditCard size={18} />
-                <span>{card.network}</span>
+                <span>{card.issuer}</span>
+                <strong>{shortCardName(card)}</strong>
               </span>
               <span className={styles.cardText}>
-                <strong>{card.displayName}</strong>
+                <strong>{shortCardName(card)}</strong>
                 <span>{card.issuer}</span>
+                <em>{rewardSummary(card)}</em>
               </span>
               <span className={styles.check}>{selected ? <Check size={16} /> : null}</span>
             </button>
@@ -492,89 +481,101 @@ function WalletPanel({
   );
 }
 
-function RunPanel({
+function SearchResultPanel({
   apiState,
   loadingStepIndex,
-  recommendation
+  recommendation,
+  selectedCardCount,
+  onSearchAgain
 }: {
   apiState: ApiState;
   loadingStepIndex: number;
   recommendation: Recommendation | null;
+  selectedCardCount: number;
+  onSearchAgain: () => void;
 }) {
-  return (
-    <>
-      <div className={styles.statusAndSummary}>
-        <section className={styles.statusPanel} aria-label="Agent status">
-          <div className={styles.sectionTitle}>
-            <Loader2 className={apiState.status === "loading" ? styles.spin : ""} size={18} />
-            <h2>Agent run</h2>
-          </div>
-          <StatusList
-            activeIndex={apiState.status === "loading" ? loadingStepIndex : null}
-            items={apiState.status === "loading" ? RUN_STEPS : recommendation?.statusLog ?? idleStatus()}
-            mode={apiState.status === "loading" ? "loading" : recommendation ? "complete" : "idle"}
-          />
-        </section>
-
-        <section className={styles.summaryPanel}>
-          <p className={styles.kicker}>Recommendation</p>
-          <h2>{recommendation?.product.title ?? "Ready for a product"}</h2>
-          <p>{recommendation?.explanation ?? "Run the demo query to compare prices, rewards, and offers."}</p>
-          {recommendation ? (
-            <div className={styles.qualityLine}>
-              <span>Source: {sourceLabel(recommendation.dataQuality.resultSource)}</span>
-              <span>Live check: {recommendation.dataQuality.liveLookupSucceeded ? "succeeded" : "not used"}</span>
-              {recommendation.dataQuality.demoMode ? <span>Demo mode</span> : null}
-            </div>
-          ) : null}
-        </section>
-      </div>
-
-      <section className={styles.results} aria-label="Ranked options">
-        {(recommendation?.results ?? []).map((result) => (
-          <article className={styles.resultCard} key={`${result.retailerId}-${result.cardId}`}>
-            <div className={styles.resultRank}>#{result.rank}</div>
-            <div className={styles.resultMain}>
-              <div className={styles.resultHeader}>
-                <div>
-                  <h3>{result.retailerName}</h3>
-                  <p>{result.cardName}</p>
-                  <p className={styles.resultProduct}>{result.productTitle}</p>
-                </div>
-                <div className={styles.priceBlock}>
-                  <span>{formatCurrency(result.effectivePrice)}</span>
-                  <small>{result.source === "estimated" ? "after rewards" : "effective"}</small>
-                </div>
-              </div>
-
-              <div className={styles.mathRows}>
-                <MathRow label={result.source === "estimated" ? "Benchmark spend" : "List price"} value={result.listPrice} tone="base" />
-                {result.lineItems.map((lineItem) => (
-                  <MathRow key={`${lineItem.kind}-${lineItem.label}`} label={lineItem.label} value={lineItem.amount} />
-                ))}
-              </div>
-
-              <div className={styles.resultFooter}>
-                <span className={`${styles.badge} ${styles[result.source]}`}>{sourceLabel(result.source)}</span>
-                <span>{formatCurrency(result.savings)} {result.source === "estimated" ? "estimated value" : "value found"}</span>
-                <a href={result.url} target="_blank" rel="noreferrer">
-                  Open <ArrowUpRight size={15} />
-                </a>
-              </div>
-            </div>
-          </article>
-        ))}
+  if (apiState.status === "loading") {
+    const steps = RUN_STEPS.map((step) => (step === "Reading your wallet" ? `${step} (${selectedCardCount} cards)...` : step));
+    return (
+      <section className={styles.thinkingPanel} aria-label="Agent thinking">
+        <div className={styles.agentTitle}>
+          <Loader2 className={styles.spin} size={17} />
+          <span>Agent thinking</span>
+        </div>
+        <StatusList activeIndex={loadingStepIndex} items={steps} mode="loading" />
       </section>
-    </>
+    );
+  }
+
+  const result = recommendation?.results[0];
+  if (!result) {
+    return null;
+  }
+
+  return (
+    <section className={styles.bestOptionWrap} aria-label="Best option">
+      <article className={styles.bestOptionCard}>
+        <p className={styles.kicker}>Best option</p>
+        <div className={styles.bestRows}>
+          <div>
+            <span>{result.source === "estimated" ? "Benchmark spend" : "Buy at"}</span>
+            <strong>{result.retailerName}</strong>
+            <em>{formatCurrency(result.listPrice)}</em>
+          </div>
+          <div>
+            <span>Use this card</span>
+            <strong>{result.cardName}</strong>
+            <em>{rewardPercent(result)}%</em>
+          </div>
+          <div className={styles.effectiveRow}>
+            <span>{result.source === "estimated" ? "After rewards benchmark" : "Effective price after cashback"}</span>
+            <strong>{formatCurrency(result.effectivePrice)}</strong>
+          </div>
+        </div>
+        <p>{recommendation.explanation}</p>
+      </article>
+      <button className={styles.searchAgain} type="button" onClick={onSearchAgain}>
+        <ArrowLeft size={15} />
+        Search again
+      </button>
+    </section>
   );
 }
 
-function MathRow({ label, value, tone = "discount" }: { label: string; value: number; tone?: "base" | "discount" }) {
+function RecentRecommendations({ recommendation }: { recommendation: Recommendation | null }) {
+  const latest = recommendation?.results[0]
+    ? {
+        purchase: recommendation.product.title,
+        pick: `${recommendation.results[0].retailerName} · ${recommendation.results[0].cardName}`,
+        saved: formatCurrency(recommendation.results[0].savings),
+        when: "Just now"
+      }
+    : null;
+  const rows = latest ? [latest, ...RECENT_RECOMMENDATIONS.slice(0, 4)] : RECENT_RECOMMENDATIONS;
+
   return (
-    <div className={styles.mathRow}>
-      <span>{label}</span>
-      <strong>{tone === "base" ? formatCurrency(value) : `-${formatCurrency(value)}`}</strong>
-    </div>
+    <section className={styles.recentSection} aria-label="Recent recommendations">
+      <div className={styles.recentHeader}>
+        <h2>Recent recommendations</h2>
+        <button type="button">See all →</button>
+      </div>
+      <div className={styles.recentTable}>
+        <div className={styles.recentHead}>
+          <span>Purchase</span>
+          <span>Agent&apos;s pick</span>
+          <span>Saved</span>
+          <span>When</span>
+        </div>
+        {rows.map((row) => (
+          <div className={styles.recentRow} key={`${row.purchase}-${row.pick}`}>
+            <strong>{row.purchase}</strong>
+            <span>{row.pick}</span>
+            <em>{row.saved}</em>
+            <span>{row.when}</span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -619,27 +620,23 @@ function StatusList({
   );
 }
 
-function idleStatus() {
-  return ["Wallet loaded", "Hackathon fallback ready", "Deterministic scorer ready"];
+function shortCardName(card: (typeof cards)[number]) {
+  return card.displayName.replace(card.issuer, "").trim().replace("Cash Back", "").trim() || card.displayName;
 }
 
-function sourceLabel(source: string) {
-  if (source === "fallback") {
-    return "hackathon fallback";
+function rewardSummary(card: (typeof cards)[number]) {
+  const firstReward = card.rewards[0];
+  if (firstReward) {
+    return firstReward.label;
   }
-  if (source === "seeded") {
-    return "fallback";
+  return `${card.baseRewardRate}% on everything`;
+}
+
+function rewardPercent(result: Recommendation["results"][number]) {
+  if (result.listPrice <= 0) {
+    return 0;
   }
-  if (source === "estimated") {
-    return "card estimate";
-  }
-  if (source === "mixed") {
-    return "mixed";
-  }
-  if (source === "none") {
-    return "none";
-  }
-  return source;
+  return Math.max(0, Math.round((result.savings / result.listPrice) * 100));
 }
 
 function formatCurrency(value: number) {
