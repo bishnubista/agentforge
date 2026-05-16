@@ -12,13 +12,22 @@ Users select the cards they carry, enter a product URL or product name, and rece
 - CSS Modules
 - Static JSON seed data with optional live vendor adapters
 
+## Runtime Data Path
+
+The latest demo path runs **live data first** and falls back gracefully when needed:
+
+- Bright Data is attempted first for live retailer/search lookup and product price discovery.
+- If live lookup is unavailable, times out, or returns too few usable retailer prices, the app uses verified hackathon fallback coverage from `data/demo-products.json`.
+- If no product-specific fallback match exists and demo mode is enabled, the app uses seeded retailer links so the recommendation flow still completes.
+- Scoring always stays deterministic in TypeScript; LLM providers only help classify intent, extract product details, and write short explanations.
+
 ## Vendors Used
 
 The running demo actively uses **4 hackathon vendor integrations**:
 
 | Vendor | Status | Used for |
 | --- | --- | --- |
-| Bright Data | Active | Live product/search lookup and retailer price discovery |
+| Bright Data | Active | Live product/search lookup and retailer price discovery, with cached/seeded fallback if live results are unavailable or insufficient |
 | Qwen Cloud | Active | Product extraction and shopper-facing recommendation explanations |
 | TokenRouter | Active/configured | LLM routing and fallback, especially intent classification |
 | Butterbase | Active | Recommendation run logging/history |
