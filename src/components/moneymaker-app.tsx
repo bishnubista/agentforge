@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, BarChart3, Check, CreditCard, Loader2, Search, WalletCards } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cards } from "@/lib/data";
 import { logger } from "@/lib/logger";
 import type { Recommendation } from "@/lib/types";
@@ -29,11 +29,11 @@ const EXTRA_SUGGESTIONS = [
   "Amazon Prime subscription"
 ];
 const RECENT_RECOMMENDATIONS = [
-  { purchase: "AirPods Pro", pick: "-", saved: "$", when: "Just now" },
-  { purchase: "Patagonia Neo Puff Jacket", pick: "-", saved: "$", when: "Just now" },
-  { purchase: "Best card for gas", pick: "Citi Custom Cash", saved: "$", when: "Just now" },
-  { purchase: "on cloudtech shoes", pick: "On Official Website · Gold Card (American Express)", saved: "$", when: "Just now" },
-  { purchase: "Garmin Fenix 8", pick: "Amazon · Gold Card (American Express)", saved: "$", when: "Just now" }
+  { purchase: "AirPods Pro", pick: "Amazon · Prime Visa", saved: "$9.50", when: "Just now" },
+  { purchase: "Patagonia Neo Puff Jacket", pick: "REI · American Express Gold", saved: "$45.19", when: "Just now" },
+  { purchase: "Best card for gas", pick: "Chevron · Discover it Cash Back", saved: "$3.10", when: "Just now" },
+  { purchase: "on cloudtech shoes", pick: "On Official Website · Gold Card (American Express)", saved: "$18.42", when: "Just now" },
+  { purchase: "Garmin Fenix 8", pick: "Amazon · Prime Visa", saved: "$34.00", when: "Just now" }
 ];
 const appLogger = logger.child({ module: "moneymaker-app" });
 type ActiveView = "search" | "wallet" | "results";
@@ -53,6 +53,8 @@ export function MoneymakerApp() {
   const [activeView, setActiveView] = useState<ActiveView>("search");
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false);
+  const [lastSubmittedQuery, setLastSubmittedQuery] = useState("");
+  const requestSequence = useRef(0);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -95,15 +97,29 @@ export function MoneymakerApp() {
     [selectedCardIds]
   );
 
-  async function submitRecommendation(event?: React.FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-    const trimmed = query.trim();
+  function handleQueryChange(nextQuery: string) {
+    setQuery(nextQuery);
+    if (
+      lastSubmittedQuery &&
+      nextQuery.trim().toLowerCase() !== lastSubmittedQuery.toLowerCase() &&
+      apiState.status !== "loading" &&
+      apiState.data
+    ) {
+      setApiState({ status: "idle", data: null, error: null });
+    }
+  }
+
+  async function runRecommendation(searchQuery: string) {
+    const trimmed = searchQuery.trim();
     if (!trimmed) {
       return;
     }
 
+    const sequenceId = requestSequence.current + 1;
+    requestSequence.current = sequenceId;
+    setLastSubmittedQuery(trimmed);
     setLoadingStepIndex(0);
-    setApiState((current) => ({ status: "loading", data: current.data, error: null }));
+    setApiState({ status: "loading", data: null, error: null });
 
     try {
       const response = await fetch("/api/recommend", {
@@ -115,12 +131,12 @@ export function MoneymakerApp() {
         })
       });
 
-      const requestId = response.headers.get("x-request-id");
+      const browserRequestId = response.headers.get("x-request-id");
       const payload = await response.json().catch((error) => {
         appLogger.warn("Recommendation API response was not valid JSON", {
           error,
           status: response.status,
-          requestId
+          requestId: browserRequestId
         });
         return null;
       });
@@ -129,14 +145,22 @@ export function MoneymakerApp() {
           payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
             ? payload.error
             : "Recommendation failed.";
-        throw new Error(requestId ? `${message} Request id: ${requestId}` : message);
+        throw new Error(browserRequestId ? `${message} Request id: ${browserRequestId}` : message);
       }
       if (!payload) {
-        throw new Error(requestId ? `Recommendation failed. Request id: ${requestId}` : "Recommendation failed.");
+        throw new Error(
+          browserRequestId ? `Recommendation failed. Request id: ${browserRequestId}` : "Recommendation failed."
+        );
       }
 
+      if (requestSequence.current !== sequenceId) {
+        return;
+      }
       setApiState({ status: "success", data: payload as Recommendation, error: null });
     } catch (error) {
+      if (requestSequence.current !== sequenceId) {
+        return;
+      }
       appLogger.error("Recommendation request failed in browser", {
         error,
         queryLength: trimmed.length,
@@ -148,6 +172,16 @@ export function MoneymakerApp() {
         error: error instanceof Error ? error.message : "Recommendation failed."
       }));
     }
+  }
+
+  async function submitRecommendation(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    await runRecommendation(query);
+  }
+
+  function chooseSuggestion(suggestion: string) {
+    setQuery(suggestion);
+    void runRecommendation(suggestion);
   }
 
   function toggleCard(cardId: string) {
@@ -219,7 +253,7 @@ export function MoneymakerApp() {
                     <input
                       id="product-query"
                       value={query}
-                      onChange={(event) => setQuery(event.target.value)}
+                      onChange={(event) => handleQueryChange(event.target.value)}
                       placeholder="Search a product, brand, or store..."
                     />
                     <button disabled={apiState.status === "loading"} type="submit">
@@ -239,7 +273,7 @@ export function MoneymakerApp() {
                   <div className={styles.suggested}>
                     <span>Try:</span>
                     {PRIMARY_SUGGESTIONS.map((suggestion) => (
-                      <button key={suggestion} type="button" onClick={() => setQuery(suggestion)}>
+                      <button key={suggestion} type="button" onClick={() => chooseSuggestion(suggestion)}>
                         {suggestion}
                       </button>
                     ))}
@@ -254,7 +288,7 @@ export function MoneymakerApp() {
                   {suggestionsExpanded ? (
                     <div className={styles.moreSuggestions}>
                       {EXTRA_SUGGESTIONS.map((suggestion) => (
-                        <button key={suggestion} type="button" onClick={() => setQuery(suggestion)}>
+                        <button key={suggestion} type="button" onClick={() => chooseSuggestion(suggestion)}>
                           {suggestion}
                         </button>
                       ))}
