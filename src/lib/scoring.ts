@@ -102,6 +102,7 @@ function scorePair({
     rank: 0,
     retailerId: retailerOffer.retailerId,
     retailerName: retailerOffer.retailerName,
+    productTitle: retailerOffer.productTitle,
     cardId: card.id,
     cardName: card.displayName,
     listPrice,

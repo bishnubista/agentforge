@@ -398,6 +398,7 @@ function RunPanel({
                 <div>
                   <h3>{result.retailerName}</h3>
                   <p>{result.cardName}</p>
+                  <p className={styles.resultProduct}>{result.productTitle}</p>
                 </div>
                 <div className={styles.priceBlock}>
                   <span>{formatCurrency(result.effectivePrice)}</span>

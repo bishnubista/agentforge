@@ -1,13 +1,14 @@
 import { envPositiveInteger, getBrightDataApiKey } from "./env";
 import { retailers } from "./data";
 import { logger } from "./logger";
-import type { Product, RetailerOffer } from "./types";
+import type { Product, RecommendationWarning, RetailerOffer } from "./types";
 
 export type BrightDataOfferLookup = {
   ok: boolean;
   message: string;
   offers: RetailerOffer[];
   sourceCount?: number;
+  warnings?: RecommendationWarning[];
 };
 
 type BrightDataShoppingRow = {
@@ -40,6 +41,57 @@ const RESALE_MARKETPLACE_TOKENS = [
   "thredup",
   "whatnot"
 ];
+const CONDITION_RETAILER_TOKENS = ["back market", "gazelle", "reebelo"];
+const GENERIC_MERCHANT_TOKENS = ["magento", "nopcommerce", "prestashop", "shopify", "woocommerce"];
+const CONDITION_TOKENS = [
+  "fair",
+  "open box",
+  "parts only",
+  "pre owned",
+  "preowned",
+  "refurbished",
+  "renewed",
+  "restored",
+  "used"
+];
+const CARRIER_LOCKED_TOKENS = [
+  "at and t",
+  "att",
+  "boost mobile",
+  "carrier locked",
+  "cricket",
+  "locked",
+  "metro",
+  "prepaid",
+  "simple mobile",
+  "straight talk",
+  "t mobile",
+  "tmobile",
+  "tracfone",
+  "verizon",
+  "xfinity mobile"
+];
+const PHONE_VARIANT_TOKENS = ["pro max", "pro", "max", "ultra", "plus", "mini", "fe", "se"];
+const ACCESSORY_TOKENS = [
+  "adapter",
+  "band",
+  "battery",
+  "case",
+  "cases",
+  "cable",
+  "charger",
+  "cover",
+  "filter",
+  "holder",
+  "mount",
+  "protector",
+  "repair kit",
+  "replacement",
+  "screen protector",
+  "stand",
+  "strap"
+];
+const PHONE_FAMILY_TOKENS = ["galaxy", "iphone", "pixel", "phone", "smartphone"];
 const STOP_WORDS = new Set([
   "and",
   "for",
@@ -75,7 +127,7 @@ export async function getBrightDataOffers({
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), envPositiveInteger("BRIGHT_DATA_TIMEOUT_MS", 9000));
+  const timeout = setTimeout(() => controller.abort(), envPositiveInteger("BRIGHT_DATA_TIMEOUT_MS", 15000));
 
   try {
     const response = await fetch("https://api.brightdata.com/request", {
@@ -109,11 +161,28 @@ export async function getBrightDataOffers({
     const payload = (await response.json()) as { body?: unknown };
     const body = parsePayloadBody(payload.body);
     const sourceCount = countShoppingRows(body);
-    const offers = parseBrightDataShoppingOffers(body, product, isHttpUrl(query) ? "" : query);
+    const queryHint = isHttpUrl(query) ? "" : query;
+    const strictOffers = parseBrightDataShoppingOffers(body, product, queryHint);
+    const constrainedOffers =
+      strictOffers.length === 0
+        ? parseBrightDataShoppingOffers(body, product, queryHint, { allowConstrainedListings: true })
+        : [];
+    const offers = strictOffers.length > 0 ? strictOffers : constrainedOffers;
+    const warnings =
+      strictOffers.length === 0 && constrainedOffers.length > 0
+        ? [
+            {
+              code: "CONSTRAINED_LIVE_RESULTS",
+              message:
+                "Only constrained live listings were found, such as refurbished, prepaid, carrier-locked, or secondary-market offers. Review the retailer product title before buying."
+            }
+          ]
+        : [];
     brightDataLogger.info("Bright Data lookup completed", {
       productTitle: product.title,
       sourceCount,
       offerCount: offers.length,
+      constrainedFallback: strictOffers.length === 0 && constrainedOffers.length > 0,
       ok: offers.length > 0
     });
 
@@ -121,6 +190,7 @@ export async function getBrightDataOffers({
       ok: offers.length > 0,
       offers,
       sourceCount,
+      warnings,
       message:
         offers.length > 0
           ? `Bright Data returned ${offers.length} live shopping prices from ${sourceCount} candidates`
@@ -142,14 +212,27 @@ export async function getBrightDataOffers({
   }
 }
 
-export function parseBrightDataShoppingOffers(body: unknown, product: Product, queryHint = ""): RetailerOffer[] {
+type BrightDataParseOptions = {
+  allowConstrainedListings?: boolean;
+};
+
+type ParsedRetailerOffer = RetailerOffer & { relevanceScore: number; knownRetailer: boolean };
+
+export function parseBrightDataShoppingOffers(
+  body: unknown,
+  product: Product,
+  queryHint = "",
+  options: BrightDataParseOptions = {}
+): RetailerOffer[] {
   const rows = extractShoppingRows(body);
   const now = new Date().toISOString();
   const maxRetailers = positiveIntegerFromEnv("MAX_RETAILERS", 8);
 
-  const candidates = rows
-    .map((row) => rowToOffer(row, product, queryHint, now))
-    .filter((offer): offer is RetailerOffer & { relevanceScore: number; knownRetailer: boolean } => Boolean(offer))
+  const candidates = filterPriceOutliers(
+    rows
+      .map((row) => rowToOffer(row, product, queryHint, now, options))
+      .filter((offer): offer is ParsedRetailerOffer => Boolean(offer))
+  )
     .sort((a, b) => {
       if (a.knownRetailer !== b.knownRetailer) {
         return a.knownRetailer ? -1 : 1;
@@ -160,7 +243,7 @@ export function parseBrightDataShoppingOffers(body: unknown, product: Product, q
       return a.price - b.price;
     });
 
-  const bestByRetailer = new Map<string, RetailerOffer & { relevanceScore: number; knownRetailer: boolean }>();
+  const bestByRetailer = new Map<string, ParsedRetailerOffer>();
   for (const candidate of candidates) {
     const current = bestByRetailer.get(candidate.retailerId);
     if (!current || candidate.relevanceScore > current.relevanceScore || candidate.price < current.price) {
@@ -168,11 +251,7 @@ export function parseBrightDataShoppingOffers(body: unknown, product: Product, q
     }
   }
 
-  const deduped = [...bestByRetailer.values()];
-  const knownRetailerOffers = deduped.filter((offer) => offer.knownRetailer);
-  const offers = knownRetailerOffers.length > 0 ? knownRetailerOffers : deduped;
-
-  return offers
+  return [...bestByRetailer.values()]
     .slice(0, maxRetailers)
     .map(({ relevanceScore: _relevanceScore, knownRetailer: _knownRetailer, ...offer }) => offer);
 }
@@ -181,12 +260,13 @@ function rowToOffer(
   row: BrightDataShoppingRow,
   product: Product,
   queryHint: string,
-  fetchedAt: string
-): (RetailerOffer & { relevanceScore: number; knownRetailer: boolean }) | null {
+  fetchedAt: string,
+  options: BrightDataParseOptions
+): ParsedRetailerOffer | null {
   const title = cleanDuplicatedText(stringValue(row.title));
-  const merchant = cleanDuplicatedText(stringValue(row.shop) || stringValue(row.source) || domainName(stringValue(row.link)));
   const price = parsePrice(row.price);
-  const url = stringValue(row.link) || stringValue(row.referral_link) || stringValue(row.shop_link);
+  const url = preferredUrl(row);
+  const merchant = cleanDuplicatedText(merchantName(row, url));
   const relevanceScore = productRelevance(product, title, queryHint);
 
   if (
@@ -195,8 +275,10 @@ function rowToOffer(
     !price ||
     !isHttpUrl(url) ||
     relevanceScore < 0.55 ||
+    isGenericMerchant(merchant) ||
     isResaleMarketplace(merchant) ||
-    isDisqualifiedTitle(title, queryHint, product)
+    isConditionRetailer(merchant, queryHint, product, options) ||
+    isDisqualifiedTitle(title, queryHint, product, options)
   ) {
     return null;
   }
@@ -216,6 +298,46 @@ function rowToOffer(
     relevanceScore,
     knownRetailer: retailer.known
   };
+}
+
+function merchantName(row: BrightDataShoppingRow, url: string) {
+  const rawMerchant = stringValue(row.shop) || stringValue(row.source);
+  if (rawMerchant && !isGenericMerchant(rawMerchant)) {
+    return rawMerchant;
+  }
+
+  const domain = domainName(url);
+  if (domain && !isGoogleUrl(url)) {
+    return domain;
+  }
+
+  return rawMerchant || domain;
+}
+
+function isGenericMerchant(merchant: string) {
+  const normalizedMerchant = normalizeText(merchant);
+  return hasAnyPhrase(normalizedMerchant, GENERIC_MERCHANT_TOKENS);
+}
+
+function filterPriceOutliers(offers: ParsedRetailerOffer[]) {
+  if (offers.length < 2) {
+    return offers;
+  }
+
+  const median = medianPrice(offers.map((offer) => offer.price));
+  const minPrice = median * 0.35;
+  const maxPrice = median * 3.5;
+  return offers.filter((offer) => offer.price >= minPrice && offer.price <= maxPrice);
+}
+
+function medianPrice(prices: number[]) {
+  const sorted = [...prices].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) {
+    return sorted[middle] ?? 0;
+  }
+
+  return ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2;
 }
 
 function buildGoogleShoppingUrl(product: Product, query: string) {
@@ -291,6 +413,20 @@ function isResaleMarketplace(merchant: string) {
   return RESALE_MARKETPLACE_TOKENS.some((token) => normalizedMerchant.includes(normalizeText(token)));
 }
 
+function isConditionRetailer(
+  merchant: string,
+  queryHint: string,
+  product: Product,
+  options: BrightDataParseOptions
+) {
+  const normalizedMerchant = normalizeText(merchant);
+  if (!hasAnyPhrase(normalizedMerchant, CONDITION_RETAILER_TOKENS)) {
+    return false;
+  }
+
+  return !options.allowConstrainedListings && !hasConditionIntent(queryHint, product);
+}
+
 function productRelevance(product: Product, title: string, queryHint: string) {
   const productTokens = meaningfulTokens(`${product.brand} ${product.title} ${queryHint}`);
   const titleTokens = meaningfulTokens(title);
@@ -317,12 +453,43 @@ function tokenMatches(productToken: string, titleTokens: string[]) {
   });
 }
 
-function isDisqualifiedTitle(title: string, queryHint: string, product: Product) {
+function isDisqualifiedTitle(
+  title: string,
+  queryHint: string,
+  product: Product,
+  options: BrightDataParseOptions
+) {
   const normalizedTitle = normalizeText(title);
   const normalizedQuery = normalizeText(queryHint);
   const normalizedProductTitle = normalizeText(product.title);
+  const normalizedIntent = normalizeText(`${queryHint} ${product.title} ${product.brand}`);
 
-  if (/\b(used|pre owned|preowned|refurbished|restored|renewed|parts only)\b/.test(normalizedTitle)) {
+  if (hasPhrase(normalizedTitle, "parts only")) {
+    return true;
+  }
+
+  if (
+    hasAnyPhrase(normalizedTitle, CONDITION_TOKENS) &&
+    !options.allowConstrainedListings &&
+    !hasConditionIntent(queryHint, product)
+  ) {
+    return true;
+  }
+
+  if (
+    isPhoneLike(normalizedIntent, normalizedTitle) &&
+    hasAnyPhrase(normalizedTitle, CARRIER_LOCKED_TOKENS) &&
+    !options.allowConstrainedListings &&
+    !hasAnyPhrase(normalizedIntent, CARRIER_LOCKED_TOKENS)
+  ) {
+    return true;
+  }
+
+  if (hasUnrequestedPhoneVariant(normalizedTitle, normalizedIntent)) {
+    return true;
+  }
+
+  if (hasAnyPhrase(normalizedTitle, ACCESSORY_TOKENS) && !hasAnyPhrase(normalizedIntent, ACCESSORY_TOKENS)) {
     return true;
   }
 
@@ -343,6 +510,49 @@ function isDisqualifiedTitle(title: string, queryHint: string, product: Product)
   }
 
   return false;
+}
+
+function hasConditionIntent(queryHint: string, product: Product) {
+  return hasAnyPhrase(normalizeText(`${queryHint} ${product.title}`), CONDITION_TOKENS);
+}
+
+function hasUnrequestedPhoneVariant(normalizedTitle: string, normalizedIntent: string) {
+  if (!isPhoneLike(normalizedIntent, normalizedTitle)) {
+    return false;
+  }
+
+  const titleVariants = PHONE_VARIANT_TOKENS.filter((variant) => hasPhrase(normalizedTitle, variant));
+  if (titleVariants.length === 0) {
+    return false;
+  }
+
+  return titleVariants.some((variant) => !hasPhrase(normalizedIntent, variant));
+}
+
+function isPhoneLike(normalizedIntent: string, normalizedTitle: string) {
+  return hasAnyPhrase(normalizedIntent, PHONE_FAMILY_TOKENS) || hasAnyPhrase(normalizedTitle, PHONE_FAMILY_TOKENS);
+}
+
+function hasAnyPhrase(normalizedValue: string, phrases: string[]) {
+  return phrases.some((phrase) => hasPhrase(normalizedValue, phrase));
+}
+
+function hasPhrase(normalizedValue: string, phrase: string) {
+  const normalizedPhrase = normalizeText(phrase);
+  return new RegExp(`(?:^| )${escapeRegExp(normalizedPhrase)}(?: |$)`).test(normalizedValue);
+}
+
+function preferredUrl(row: BrightDataShoppingRow) {
+  const candidates = [row.referral_link, row.shop_link, row.link].map(stringValue).filter(isHttpUrl);
+  return candidates.find((url) => !isGoogleUrl(url)) ?? candidates[0] ?? "";
+}
+
+function isGoogleUrl(value: string) {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "").endsWith("google.com");
+  } catch {
+    return false;
+  }
 }
 
 function parsePrice(value: unknown) {
@@ -396,11 +606,15 @@ function isHttpUrl(value: string) {
 }
 
 function normalizeText(value: string) {
-  return value.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+  return value.toLowerCase().replace(/&/g, " and ").replace(/\+/g, " plus ").replace(/[^a-z0-9]+/g, " ").trim();
 }
 
 function slugify(value: string) {
   return normalizeText(value).replace(/\s+/g, "-") || "unknown-retailer";
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function positiveIntegerFromEnv(name: string, fallback: number) {

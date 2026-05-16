@@ -1,5 +1,5 @@
 import { envFlag, envPositiveInteger, hasBrightDataConfig } from "./env";
-import { getBrightDataOffers } from "./bright-data";
+import { getBrightDataOffers, type BrightDataOfferLookup } from "./bright-data";
 import type { DemoProduct, Product, RecommendationWarning, RetailerOffer } from "./types";
 
 export type RetailerSearchResult = {
@@ -15,12 +15,14 @@ export async function searchRetailers({
   product,
   query,
   demoProduct,
-  requestId
+  requestId,
+  liveOfferLookup = getBrightDataOffers
 }: {
   product: Product;
   query: string;
   demoProduct?: DemoProduct;
   requestId?: string;
+  liveOfferLookup?: (input: { product: Product; query: string; requestId?: string }) => Promise<BrightDataOfferLookup>;
 }): Promise<RetailerSearchResult> {
   const status: string[] = [];
   const warnings: RecommendationWarning[] = [];
@@ -36,12 +38,30 @@ export async function searchRetailers({
     status.push("Live product shopping lookup does not apply to this category-spend scenario");
   } else if (useLiveData && hasBrightDataConfig()) {
     liveLookupAttempted = true;
-    const liveLookup = await getBrightDataOffers({ product, query, requestId });
+    const liveLookup = await liveOfferLookup({ product, query, requestId });
     liveLookupSucceeded = liveLookup.ok;
     status.push(liveLookup.message);
+    warnings.push(...(liveLookup.warnings ?? []));
 
     if (liveLookup.offers.length >= minRetailerResults) {
       status.push(`Using ${liveLookup.offers.length} live retailer prices`);
+      return {
+        offers: liveLookup.offers,
+        status,
+        warnings,
+        liveLookupAttempted,
+        liveLookupSucceeded,
+        demoMode
+      };
+    }
+
+    if (!demoProduct && liveLookup.offers.length > 0) {
+      status.push(`Using ${liveLookup.offers.length} partial live retailer price${liveLookup.offers.length === 1 ? "" : "s"}`);
+      warnings.push({
+        code: "PARTIAL_LIVE_RESULTS",
+        message:
+          "Live lookup returned fewer retailer prices than the usual comparison target, so this run uses the verified live prices it found."
+      });
       return {
         offers: liveLookup.offers,
         status,

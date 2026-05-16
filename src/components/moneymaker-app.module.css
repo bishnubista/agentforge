@@ -601,6 +601,10 @@
   gap: 12px;
 }
 
+.resultHeader > div:first-child {
+  min-width: 0;
+}
+
 .resultHeader h3 {
   margin: 0;
   font-size: 1.08rem;
@@ -609,6 +613,14 @@
 .resultHeader p {
   margin: 3px 0 0;
   color: var(--muted);
+}
+
+.resultProduct {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
 }
 
 .priceBlock {

@@ -1,5 +1,6 @@
 import { cards, demoProducts, offers } from "../src/lib/data";
 import { parseBrightDataShoppingOffers } from "../src/lib/bright-data";
+import { findDemoProduct, productMatchesQuery } from "../src/lib/product";
 import { scoreOptions } from "../src/lib/scoring";
 import { searchRetailers } from "../src/lib/search";
 import type { Product, RetailerOffer } from "../src/lib/types";
@@ -92,9 +93,26 @@ const outOfStockResults = scoreOptions({
   now: new Date("2026-05-16T12:00:00-07:00")
 });
 assertEqual(outOfStockResults.length, 0, "out-of-stock retailer offers must not be scored");
+assert(!findDemoProduct("iPhone 13 Pro"), "single-token overlap must not match an unrelated cached demo product");
+assertEqual(findDemoProduct("AirPods Pro 2")?.id, "airpods-pro-2", "exact cached aliases should still match");
+assert(
+  !productMatchesQuery("iPhone 13 Pro", demoProducts.find((demoProduct) => demoProduct.id === "airpods-pro-2")!.product),
+  "LLM extraction validation should reject unrelated products that only share a generic variant token"
+);
+assert(
+  productMatchesQuery("S24", {
+    title: "Samsung Galaxy S24",
+    brand: "Samsung",
+    category: "electronics",
+    mccFamily: "electronics",
+    confidence: 0.9
+  }),
+  "LLM extraction validation should allow short distinctive model-number searches"
+);
 
 const previousDemoMode = process.env.DEMO_MODE;
 const previousUseLiveData = process.env.USE_LIVE_DATA;
+const previousBrightDataApiKey = process.env.BRIGHT_DATA_API_KEY;
 process.env.DEMO_MODE = "false";
 process.env.USE_LIVE_DATA = "false";
 const productionSearch = await searchRetailers({
@@ -108,8 +126,46 @@ const productionSearch = await searchRetailers({
   }
 });
 assertEqual(productionSearch.offers.length, 0, "production mode must not fabricate seeded retailer prices");
-process.env.DEMO_MODE = previousDemoMode;
-process.env.USE_LIVE_DATA = previousUseLiveData;
+
+process.env.USE_LIVE_DATA = "true";
+process.env.BRIGHT_DATA_API_KEY = "test-key";
+const partialLiveSearch = await searchRetailers({
+  query: "iPhone 13",
+  product: {
+    title: "iPhone 13",
+    brand: "Apple",
+    category: "electronics",
+    mccFamily: "electronics",
+    confidence: 0.9
+  },
+  liveOfferLookup: async () => ({
+    ok: true,
+    message: "mocked one live offer",
+    sourceCount: 40,
+    offers: [
+      {
+        retailerId: "walmart",
+        retailerName: "Walmart",
+        productTitle: "Apple iPhone 13 128 GB",
+        price: 249,
+        currency: "USD",
+        inStock: true,
+        url: "https://www.walmart.com/search?q=iphone%2013",
+        source: "live",
+        fetchedAt: "2026-05-16T12:00:00-07:00"
+      }
+    ]
+  })
+});
+assertEqual(partialLiveSearch.offers.length, 1, "uncached products should keep partial live retailer prices");
+assert(
+  partialLiveSearch.warnings.some((warning) => warning.code === "PARTIAL_LIVE_RESULTS"),
+  "partial live search should disclose limited live coverage"
+);
+
+restoreEnv("DEMO_MODE", previousDemoMode);
+restoreEnv("USE_LIVE_DATA", previousUseLiveData);
+restoreEnv("BRIGHT_DATA_API_KEY", previousBrightDataApiKey);
 
 const liveOffers = parseBrightDataShoppingOffers(
   {
@@ -142,6 +198,150 @@ assertEqual(liveOffers[0]?.source, "live", "Bright Data parser should label pars
 assertEqual(liveOffers[0]?.retailerId, "target", "Bright Data parser should map known retailers");
 assertEqual(liveOffers[0]?.price, 199.99, "Bright Data parser should parse USD prices");
 
+const phoneProduct: Product = {
+  title: "iPhone 13",
+  brand: "Apple",
+  category: "electronics",
+  mccFamily: "electronics",
+  confidence: 0.9
+};
+const strictPhoneOffers = parseBrightDataShoppingOffers(
+  {
+    shopping: [
+      {
+        title: "Restored Apple iPhone 13",
+        shop: "Walmart",
+        price: "$249.00",
+        link: "https://www.walmart.com/ip/restored-apple-iphone-13"
+      },
+      {
+        title: "At&t Apple iPhone 13, 128 GB, Midnight - Prepaid Smartphone [Locked to AT&T]",
+        shop: "Walmart",
+        price: "$249.00",
+        link: "https://www.walmart.com/ip/att-iphone-13-prepaid"
+      },
+      {
+        title: "Apple iPhone 13 Pro 128GB",
+        shop: "Best Buy",
+        price: "$699.00",
+        link: "https://www.bestbuy.com/site/iphone-13-pro"
+      },
+      {
+        title: "Apple iPhone 13 MagSafe Case",
+        shop: "Target",
+        price: "$49.99",
+        link: "https://www.target.com/p/iphone-13-case"
+      },
+      {
+        title: "Apple iPhone 13 128GB Unlocked",
+        shop: "Apple",
+        price: "$599.00",
+        link: "https://www.apple.com/shop/buy-iphone/iphone-13"
+      }
+    ]
+  },
+  phoneProduct,
+  "iPhone 13"
+);
+assertEqual(strictPhoneOffers.length, 1, "strict phone parsing should reject constrained, variant, and accessory rows");
+assertEqual(strictPhoneOffers[0]?.productTitle, "Apple iPhone 13 128GB Unlocked", "strict phone parsing should keep the exact base phone");
+
+const constrainedPhoneOffers = parseBrightDataShoppingOffers(
+  {
+    shopping: [
+      {
+        title: "Restored Apple iPhone 13",
+        shop: "Walmart",
+        price: "$249.00",
+        link: "https://www.walmart.com/ip/restored-apple-iphone-13"
+      },
+      {
+        title: "iPhone 13 128GB - Green - Unlocked",
+        shop: "Back Market",
+        price: "$247.00",
+        link: "https://www.backmarket.com/en-us/p/iphone-13"
+      }
+    ]
+  },
+  phoneProduct,
+  "iPhone 13",
+  { allowConstrainedListings: true }
+);
+assertEqual(constrainedPhoneOffers.length, 2, "constrained fallback should preserve matching reconditioned rows");
+
+const galaxyOffers = parseBrightDataShoppingOffers(
+  {
+    shopping: [
+      {
+        title: "Samsung Galaxy S24 256GB",
+        shop: "nopCommerce",
+        price: "$859.00",
+        link: "https://www.google.com/search?ibp=oshop&q=Samsung+Galaxy+S24+256GB"
+      },
+      {
+        title: "Samsung Galaxy S24 Ultra 5G 256GB",
+        shop: "Newegg",
+        price: "$999.99",
+        link: "https://www.newegg.com/samsung-galaxy-s24-ultra"
+      },
+      {
+        title: "Samsung Galaxy S24 128GB Unlocked",
+        shop: "Samsung",
+        price: "$799.99",
+        link: "https://www.samsung.com/us/smartphones/galaxy-s24/buy/"
+      }
+    ]
+  },
+  {
+    title: "Samsung Galaxy S24",
+    brand: "Samsung",
+    category: "electronics",
+    mccFamily: "electronics",
+    confidence: 0.9
+  },
+  "Samsung Galaxy S24"
+);
+assertEqual(galaxyOffers.length, 1, "base phone searches should reject unrequested Ultra/Pro/Max variants");
+assertEqual(galaxyOffers[0]?.productTitle, "Samsung Galaxy S24 128GB Unlocked", "base phone parsing should keep the base model");
+
+const vacuumOffers = parseBrightDataShoppingOffers(
+  {
+    shopping: [
+      {
+        title: "Dyson V15 Best Cordless Vacuum Black Friday Dyson V15 Detect Cordless Vacuum Cleaner",
+        shop: "derechoysociedad.pe",
+        price: "$40.00",
+        link: "https://derechoysociedad.pe/dyson-v15"
+      },
+      {
+        title: "Dyson V15 Detect Cordless Vacuum",
+        shop: "Best Buy",
+        price: "$399.00",
+        link: "https://www.bestbuy.com/site/dyson-v15-detect"
+      },
+      {
+        title: "Dyson V15 Detect Vacuum",
+        shop: "Dyson",
+        price: "$449.00",
+        link: "https://www.dyson.com/vacuum-cleaners/cordless/v15"
+      }
+    ]
+  },
+  {
+    title: "Dyson V15 Vacuum",
+    brand: "Dyson",
+    category: "home_goods",
+    mccFamily: "home_goods",
+    confidence: 0.9
+  },
+  "Dyson V15 vacuum"
+);
+assertEqual(vacuumOffers.length, 2, "live parser should reject severe low-price outliers");
+assert(
+  vacuumOffers.every((offer) => offer.retailerName !== "derechoysociedad.pe"),
+  "low-price outlier merchant should not survive parsing"
+);
+
 console.table(
   results.map((result) => ({
     rank: result.rank,
@@ -163,4 +363,13 @@ function assertEqual<T>(actual: T, expected: T, message: string) {
   if (actual !== expected) {
     throw new Error(`${message}. Expected ${String(expected)}, got ${String(actual)}.`);
   }
+}
+
+function restoreEnv(name: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
 }

@@ -99,6 +99,7 @@ export type ScoredOption = {
   rank: number;
   retailerId: string;
   retailerName: string;
+  productTitle: string;
   cardId: string;
   cardName: string;
   listPrice: number;
