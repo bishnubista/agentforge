@@ -1,19 +1,27 @@
 import { envPositiveInteger, getButterbaseConfig } from "./env";
+import { logger } from "./logger";
 import type { Product, ScoredOption } from "./types";
 
 export async function logRecommendationRun({
   query,
   product,
   results,
-  selectedCardIds
+  selectedCardIds,
+  requestId
 }: {
   query: string;
   product: Product;
   results: ScoredOption[];
   selectedCardIds: string[];
+  requestId?: string;
 }): Promise<{ ok: boolean; message: string }> {
+  const butterbaseLogger = logger.child({
+    module: "butterbase",
+    requestId
+  });
   const config = getButterbaseConfig();
   if (!config) {
+    butterbaseLogger.debug("Butterbase logging skipped because credentials are not configured");
     return {
       ok: false,
       message: "Butterbase not configured"
@@ -46,6 +54,12 @@ export async function logRecommendationRun({
     });
 
     if (!response.ok) {
+      butterbaseLogger.warn("Butterbase recommendation history write returned a non-OK response", {
+        status: response.status,
+        statusText: response.statusText,
+        productTitle: product.title,
+        resultCount: results.length
+      });
       return {
         ok: false,
         message: "Butterbase history table unavailable; run setup script if history is needed"
@@ -56,7 +70,12 @@ export async function logRecommendationRun({
       ok: true,
       message: "Butterbase logged recommendation history"
     };
-  } catch {
+  } catch (error) {
+    butterbaseLogger.warn("Butterbase recommendation history write failed", {
+      error,
+      productTitle: product.title,
+      resultCount: results.length
+    });
     return {
       ok: false,
       message: "Butterbase logging skipped after timeout"

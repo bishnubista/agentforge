@@ -1,5 +1,6 @@
 import { envPositiveInteger, getBrightDataApiKey } from "./env";
 import { retailers } from "./data";
+import { logger } from "./logger";
 import type { Product, RetailerOffer } from "./types";
 
 export type BrightDataOfferLookup = {
@@ -52,13 +53,20 @@ const STOP_WORDS = new Set([
 
 export async function getBrightDataOffers({
   product,
-  query
+  query,
+  requestId
 }: {
   product: Product;
   query: string;
+  requestId?: string;
 }): Promise<BrightDataOfferLookup> {
+  const brightDataLogger = logger.child({
+    module: "bright-data",
+    requestId
+  });
   const apiKey = getBrightDataApiKey();
   if (!apiKey) {
+    brightDataLogger.debug("Bright Data lookup skipped because credentials are not configured");
     return {
       ok: false,
       message: "Bright Data key not configured",
@@ -85,6 +93,12 @@ export async function getBrightDataOffers({
     });
 
     if (!response.ok) {
+      brightDataLogger.warn("Bright Data lookup returned a non-OK response", {
+        status: response.status,
+        statusText: response.statusText,
+        productTitle: product.title,
+        queryLength: query.length
+      });
       return {
         ok: false,
         message: `Bright Data live shopping lookup failed with HTTP ${response.status}`,
@@ -96,6 +110,12 @@ export async function getBrightDataOffers({
     const body = parsePayloadBody(payload.body);
     const sourceCount = countShoppingRows(body);
     const offers = parseBrightDataShoppingOffers(body, product, isHttpUrl(query) ? "" : query);
+    brightDataLogger.info("Bright Data lookup completed", {
+      productTitle: product.title,
+      sourceCount,
+      offerCount: offers.length,
+      ok: offers.length > 0
+    });
 
     return {
       ok: offers.length > 0,
@@ -106,7 +126,12 @@ export async function getBrightDataOffers({
           ? `Bright Data returned ${offers.length} live shopping prices from ${sourceCount} candidates`
           : `Bright Data returned ${sourceCount} shopping candidates, but none matched this product confidently`
     };
-  } catch {
+  } catch (error) {
+    brightDataLogger.warn("Bright Data lookup failed; fallback data may be used", {
+      error,
+      productTitle: product.title,
+      queryLength: query.length
+    });
     return {
       ok: false,
       message: "Bright Data live shopping lookup unavailable; using hackathon fallback if needed",
@@ -211,7 +236,12 @@ function parsePayloadBody(body: unknown) {
 
   try {
     return JSON.parse(body) as unknown;
-  } catch {
+  } catch (error) {
+    logger.warn("Bright Data payload body was not valid JSON", {
+      module: "bright-data",
+      error,
+      bodyLength: body.length
+    });
     return null;
   }
 }

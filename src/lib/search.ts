@@ -14,11 +14,13 @@ export type RetailerSearchResult = {
 export async function searchRetailers({
   product,
   query,
-  demoProduct
+  demoProduct,
+  requestId
 }: {
   product: Product;
   query: string;
   demoProduct?: DemoProduct;
+  requestId?: string;
 }): Promise<RetailerSearchResult> {
   const status: string[] = [];
   const warnings: RecommendationWarning[] = [];
@@ -34,7 +36,7 @@ export async function searchRetailers({
     status.push("Live product shopping lookup does not apply to this category-spend scenario");
   } else if (useLiveData && hasBrightDataConfig()) {
     liveLookupAttempted = true;
-    const liveLookup = await getBrightDataOffers({ product, query });
+    const liveLookup = await getBrightDataOffers({ product, query, requestId });
     liveLookupSucceeded = liveLookup.ok;
     status.push(liveLookup.message);
 

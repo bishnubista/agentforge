@@ -8,7 +8,7 @@ export type IdentifiedProduct = {
   source: "cached_match" | "llm" | "keyword_fallback";
 };
 
-export async function identifyProduct(query: string): Promise<IdentifiedProduct> {
+export async function identifyProduct(query: string, requestId?: string): Promise<IdentifiedProduct> {
   const cached = findDemoProduct(query);
   if (cached) {
     return {
@@ -18,7 +18,7 @@ export async function identifyProduct(query: string): Promise<IdentifiedProduct>
     };
   }
 
-  const llmProduct = await extractProductWithLlm(query);
+  const llmProduct = await extractProductWithLlm(query, requestId);
   if (llmProduct) {
     const llmCached = findDemoProduct(`${llmProduct.title} ${llmProduct.brand} ${llmProduct.normalizedQuery ?? ""}`);
     return {

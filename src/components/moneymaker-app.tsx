@@ -3,6 +3,7 @@
 import { ArrowUpRight, Check, CreditCard, Loader2, Search, ShieldCheck, WalletCards } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cards } from "@/lib/data";
+import { logger } from "@/lib/logger";
 import type { Recommendation } from "@/lib/types";
 import styles from "./moneymaker-app.module.css";
 
@@ -16,6 +17,7 @@ const RUN_STEPS = [
   "Building explanation",
   "Finalizing recommendation"
 ];
+const appLogger = logger.child({ module: "moneymaker-app" });
 
 type ApiState =
   | { status: "idle"; data: null; error: null }
@@ -44,7 +46,8 @@ export function MoneymakerApp() {
       if (nextIds.length > 0) {
         setSelectedCardIds(nextIds);
       }
-    } catch {
+    } catch (error) {
+      appLogger.warn("Stored wallet selection was invalid and has been reset", { error });
       window.localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
@@ -91,13 +94,33 @@ export function MoneymakerApp() {
         })
       });
 
-      const payload = await response.json();
+      const requestId = response.headers.get("x-request-id");
+      const payload = await response.json().catch((error) => {
+        appLogger.warn("Recommendation API response was not valid JSON", {
+          error,
+          status: response.status,
+          requestId
+        });
+        return null;
+      });
       if (!response.ok) {
-        throw new Error(payload.error ?? "Recommendation failed.");
+        const message =
+          payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
+            ? payload.error
+            : "Recommendation failed.";
+        throw new Error(requestId ? `${message} Request id: ${requestId}` : message);
+      }
+      if (!payload) {
+        throw new Error(requestId ? `Recommendation failed. Request id: ${requestId}` : "Recommendation failed.");
       }
 
       setApiState({ status: "success", data: payload as Recommendation, error: null });
     } catch (error) {
+      appLogger.error("Recommendation request failed in browser", {
+        error,
+        queryLength: trimmed.length,
+        selectedCardCount: selectedCardIds.length
+      });
       setApiState((current) => ({
         status: "error",
         data: current.data,

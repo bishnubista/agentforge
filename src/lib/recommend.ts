@@ -2,6 +2,7 @@ import { cards, getCardsByIds, getDefaultCards, offers } from "./data";
 import { logRecommendationRun } from "./butterbase";
 import { explainRecommendation, providerName } from "./explanation";
 import { explainWithLlm } from "./llm";
+import { logger } from "./logger";
 import { identifyProduct } from "./product";
 import { scoreOptions } from "./scoring";
 import { searchRetailers } from "./search";
@@ -10,25 +11,52 @@ import type { MoneySource, Recommendation, ScoredOption } from "./types";
 export type RecommendInput = {
   query: string;
   selectedCardIds: string[];
+  requestId?: string;
 };
 
-export async function recommend({ query, selectedCardIds }: RecommendInput): Promise<Recommendation> {
+export async function recommend({ query, selectedCardIds, requestId }: RecommendInput): Promise<Recommendation> {
+  const runLogger = logger.child({
+    module: "recommend",
+    requestId
+  });
   const statusLog: string[] = [];
   statusLog.push("Starting recommendation run");
+  runLogger.info("Recommendation run started", {
+    queryLength: query.length,
+    selectedCardCount: selectedCardIds.length
+  });
 
   const selectedCards = resolveSelectedCards(selectedCardIds);
   statusLog.push(`Loaded ${selectedCards.length} selected cards`);
+  runLogger.debug("Selected cards resolved", {
+    selectedCardIds: selectedCards.map((card) => card.id)
+  });
 
-  const identified = await identifyProduct(query);
+  const identified = await identifyProduct(query, requestId);
   statusLog.push(`Identified product: ${identified.product.title}`);
+  runLogger.info("Product identified", {
+    source: identified.source,
+    productTitle: identified.product.title,
+    productBrand: identified.product.brand,
+    category: identified.product.category,
+    confidence: identified.product.confidence
+  });
 
   const retailerSearch = await searchRetailers({
     product: identified.product,
     query,
-    demoProduct: identified.demoProduct
+    demoProduct: identified.demoProduct,
+    requestId
   });
   statusLog.push(...retailerSearch.status);
   const warnings = [...retailerSearch.warnings];
+  runLogger.info("Retailer search completed", {
+    offerCount: retailerSearch.offers.length,
+    warningCodes: warnings.map((warning) => warning.code),
+    liveLookupAttempted: retailerSearch.liveLookupAttempted,
+    liveLookupSucceeded: retailerSearch.liveLookupSucceeded,
+    demoMode: retailerSearch.demoMode
+  });
 
   statusLog.push("Applying card rewards, issuer offers, and portal boosts");
   const scored = scoreOptions({
@@ -39,6 +67,13 @@ export async function recommend({ query, selectedCardIds }: RecommendInput): Pro
   }).slice(0, 3);
 
   statusLog.push(`Scored ${retailerSearch.offers.length * selectedCards.length} retailer-card combinations`);
+  runLogger.info("Retailer-card combinations scored", {
+    candidateCount: retailerSearch.offers.length * selectedCards.length,
+    resultCount: scored.length,
+    bestRetailer: scored[0]?.retailerName,
+    bestCard: scored[0]?.cardName,
+    bestEffectivePrice: scored[0]?.effectivePrice
+  });
   if (scored.length === 0) {
     warnings.push({
       code: "NO_SCORED_OPTIONS",
@@ -48,7 +83,8 @@ export async function recommend({ query, selectedCardIds }: RecommendInput): Pro
 
   const llmExplanation = await explainWithLlm({
     product: identified.product,
-    results: scored
+    results: scored,
+    requestId
   });
   const safeLlmExplanation =
     llmExplanation && isSafeLlmExplanation(llmExplanation.text) ? llmExplanation : null;
@@ -64,11 +100,20 @@ export async function recommend({ query, selectedCardIds }: RecommendInput): Pro
     query,
     product: identified.product,
     results: scored,
-    selectedCardIds: selectedCards.map((card) => card.id)
+    selectedCardIds: selectedCards.map((card) => card.id),
+    requestId
   });
   statusLog.push(butterbaseLog.message);
+  runLogger.debug("Recommendation history logging completed", {
+    ok: butterbaseLog.ok,
+    message: butterbaseLog.message
+  });
 
   statusLog.push("Generated transparent ranked recommendation");
+  runLogger.info("Recommendation run completed", {
+    warningCodes: warnings.map((warning) => warning.code),
+    resultSource: summarizeResultSource(scored)
+  });
 
   return {
     product: identified.product,

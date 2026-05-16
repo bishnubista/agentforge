@@ -54,6 +54,12 @@ Use these for the judging flow:
 
 The live lookup path is intentionally timeout-bounded for stage demos. Tune `BRIGHT_DATA_TIMEOUT_MS`, `LLM_TIMEOUT_MS`, and `BUTTERBASE_TIMEOUT_MS` if provider latency changes.
 
+## Logging
+
+Structured logs are emitted as JSON to the console through `src/lib/logger.ts`. Set `LOG_LEVEL=debug`, `info`, `warn`, or `error` to tune verbosity. Every recommendation API response includes an `x-request-id` header and failed UI requests show that id so browser reports can be matched to server logs.
+
+The logger uses a swappable transport interface (`setLoggerTransport`) so a Sentry, Datadog, or hosted log drain transport can replace the console backend without changing call sites.
+
 ## Scripts
 
 ```bash

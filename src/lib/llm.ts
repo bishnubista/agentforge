@@ -1,5 +1,6 @@
 import type { Product, ScoredOption } from "./types";
 import { envPositiveInteger } from "./env";
+import { logger } from "./logger";
 
 type ProductExtraction = Product & {
   normalizedQuery?: string;
@@ -13,9 +14,16 @@ type ChatProvider = {
   endpoint: "chat" | "responses";
 };
 
-export async function extractProductWithLlm(query: string): Promise<ProductExtraction | null> {
+export async function extractProductWithLlm(query: string, requestId?: string): Promise<ProductExtraction | null> {
   const provider = getProvider();
+  const llmLogger = logger.child({
+    module: "llm",
+    requestId,
+    operation: "product_extraction",
+    provider: provider?.name
+  });
   if (!provider) {
+    llmLogger.debug("LLM product extraction skipped because no provider is configured");
     return null;
   }
 
@@ -24,6 +32,9 @@ export async function extractProductWithLlm(query: string): Promise<ProductExtra
 
   try {
     if (provider.endpoint !== "chat") {
+      llmLogger.debug("LLM product extraction skipped for non-chat provider endpoint", {
+        endpoint: provider.endpoint
+      });
       return null;
     }
 
@@ -53,6 +64,12 @@ export async function extractProductWithLlm(query: string): Promise<ProductExtra
     });
 
     if (!response.ok) {
+      llmLogger.warn("LLM product extraction returned a non-OK response", {
+        status: response.status,
+        statusText: response.statusText,
+        queryLength: query.length,
+        model: provider.model
+      });
       return null;
     }
 
@@ -61,11 +78,19 @@ export async function extractProductWithLlm(query: string): Promise<ProductExtra
     };
     const content = payload.choices?.[0]?.message?.content;
     if (!content) {
+      llmLogger.warn("LLM product extraction response did not include message content", {
+        model: provider.model
+      });
       return null;
     }
 
     return parseProductExtraction(content);
-  } catch {
+  } catch (error) {
+    llmLogger.warn("LLM product extraction failed; keyword fallback may be used", {
+      error,
+      queryLength: query.length,
+      model: provider.model
+    });
     return null;
   } finally {
     clearTimeout(timeout);
@@ -74,13 +99,25 @@ export async function extractProductWithLlm(query: string): Promise<ProductExtra
 
 export async function explainWithLlm({
   product,
-  results
+  results,
+  requestId
 }: {
   product: Product;
   results: ScoredOption[];
+  requestId?: string;
 }): Promise<{ text: string; provider: string } | null> {
   const provider = getProvider();
+  const llmLogger = logger.child({
+    module: "llm",
+    requestId,
+    operation: "recommendation_explanation",
+    provider: provider?.name
+  });
   if (!provider || results.length === 0) {
+    llmLogger.debug("LLM explanation skipped", {
+      hasProvider: Boolean(provider),
+      resultCount: results.length
+    });
     return null;
   }
 
@@ -104,13 +141,19 @@ export async function explainWithLlm({
   ].join("\n");
 
   if (provider.endpoint === "responses") {
-    return explainWithResponsesProvider(provider, prompt);
+    return explainWithResponsesProvider(provider, prompt, requestId);
   }
 
-  return explainWithChatProvider(provider, prompt);
+  return explainWithChatProvider(provider, prompt, requestId);
 }
 
-async function explainWithChatProvider(provider: ChatProvider, prompt: string) {
+async function explainWithChatProvider(provider: ChatProvider, prompt: string, requestId?: string) {
+  const llmLogger = logger.child({
+    module: "llm",
+    requestId,
+    operation: "recommendation_explanation",
+    provider: provider.name
+  });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), envPositiveInteger("LLM_TIMEOUT_MS", 4000));
 
@@ -139,6 +182,11 @@ async function explainWithChatProvider(provider: ChatProvider, prompt: string) {
     });
 
     if (!response.ok) {
+      llmLogger.warn("LLM chat explanation returned a non-OK response", {
+        status: response.status,
+        statusText: response.statusText,
+        model: provider.model
+      });
       return null;
     }
 
@@ -147,14 +195,24 @@ async function explainWithChatProvider(provider: ChatProvider, prompt: string) {
     };
     const text = payload.choices?.[0]?.message?.content?.trim();
     return text ? { text, provider: provider.name } : null;
-  } catch {
+  } catch (error) {
+    llmLogger.warn("LLM chat explanation failed; deterministic explanation will be used", {
+      error,
+      model: provider.model
+    });
     return null;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-async function explainWithResponsesProvider(provider: ChatProvider, prompt: string) {
+async function explainWithResponsesProvider(provider: ChatProvider, prompt: string, requestId?: string) {
+  const llmLogger = logger.child({
+    module: "llm",
+    requestId,
+    operation: "recommendation_explanation",
+    provider: provider.name
+  });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), envPositiveInteger("LLM_TIMEOUT_MS", 4000));
 
@@ -173,6 +231,11 @@ async function explainWithResponsesProvider(provider: ChatProvider, prompt: stri
     });
 
     if (!response.ok) {
+      llmLogger.warn("LLM responses explanation returned a non-OK response", {
+        status: response.status,
+        statusText: response.statusText,
+        model: provider.model
+      });
       return null;
     }
 
@@ -185,7 +248,11 @@ async function explainWithResponsesProvider(provider: ChatProvider, prompt: stri
       payload.output?.flatMap((item) => item.content ?? []).find((content) => content.text)?.text?.trim();
 
     return text ? { text, provider: provider.name } : null;
-  } catch {
+  } catch (error) {
+    llmLogger.warn("LLM responses explanation failed; deterministic explanation will be used", {
+      error,
+      model: provider.model
+    });
     return null;
   } finally {
     clearTimeout(timeout);
@@ -230,6 +297,14 @@ function parseProductExtraction(content: string): ProductExtraction | null {
   try {
     const parsed = JSON.parse(content) as Partial<ProductExtraction>;
     if (!parsed.title || !parsed.brand || !parsed.category || !parsed.mccFamily) {
+      logger.warn("LLM product extraction JSON missed required fields", {
+        module: "llm",
+        contentLength: content.length,
+        hasTitle: Boolean(parsed.title),
+        hasBrand: Boolean(parsed.brand),
+        hasCategory: Boolean(parsed.category),
+        hasMccFamily: Boolean(parsed.mccFamily)
+      });
       return null;
     }
 
@@ -241,7 +316,12 @@ function parseProductExtraction(content: string): ProductExtraction | null {
       confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.65,
       normalizedQuery: parsed.normalizedQuery
     };
-  } catch {
+  } catch (error) {
+    logger.warn("LLM product extraction response was not valid JSON", {
+      module: "llm",
+      error,
+      contentLength: content.length
+    });
     return null;
   }
 }
