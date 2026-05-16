@@ -8,6 +8,14 @@ import styles from "./moneymaker-app.module.css";
 
 const STORAGE_KEY = "moneymaker:selected-cards";
 const DEFAULT_QUERY = "Patagonia Nano Puff Men's Medium Black";
+const RUN_STEPS = [
+  "Identifying product",
+  "Checking live and fallback coverage",
+  "Filtering retailer prices",
+  "Scoring wallet rewards",
+  "Building explanation",
+  "Finalizing recommendation"
+];
 
 type ApiState =
   | { status: "idle"; data: null; error: null }
@@ -21,6 +29,7 @@ export function MoneymakerApp() {
     cards.slice(0, 4).map((card) => card.id)
   );
   const [apiState, setApiState] = useState<ApiState>({ status: "idle", data: null, error: null });
+  const [loadingStepIndex, setLoadingStepIndex] = useState(0);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -44,6 +53,19 @@ export function MoneymakerApp() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedCardIds));
   }, [selectedCardIds]);
 
+  useEffect(() => {
+    if (apiState.status !== "loading") {
+      return;
+    }
+
+    setLoadingStepIndex(0);
+    const interval = window.setInterval(() => {
+      setLoadingStepIndex((current) => Math.min(current + 1, RUN_STEPS.length - 1));
+    }, 1150);
+
+    return () => window.clearInterval(interval);
+  }, [apiState.status]);
+
   const selectedCards = useMemo(
     () => cards.filter((card) => selectedCardIds.includes(card.id)),
     [selectedCardIds]
@@ -56,6 +78,7 @@ export function MoneymakerApp() {
       return;
     }
 
+    setLoadingStepIndex(0);
     setApiState((current) => ({ status: "loading", data: current.data, error: null }));
 
     try {
@@ -181,11 +204,11 @@ export function MoneymakerApp() {
                   <Loader2 className={apiState.status === "loading" ? styles.spin : ""} size={18} />
                   <h2>Agent run</h2>
                 </div>
-                <ol>
-                  {(recommendation?.statusLog ?? idleStatus(apiState.status)).map((item, index) => (
-                    <li key={`${item}-${index}`}>{item}</li>
-                  ))}
-                </ol>
+                <StatusList
+                  activeIndex={apiState.status === "loading" ? loadingStepIndex : null}
+                  items={apiState.status === "loading" ? RUN_STEPS : recommendation?.statusLog ?? idleStatus()}
+                  mode={apiState.status === "loading" ? "loading" : recommendation ? "complete" : "idle"}
+                />
               </section>
 
               <section className={styles.summaryPanel}>
@@ -194,7 +217,7 @@ export function MoneymakerApp() {
                 <p>{recommendation?.explanation ?? "Run the demo query to compare prices, rewards, and offers."}</p>
                 {recommendation ? (
                   <div className={styles.qualityLine}>
-                    <span>Source: {recommendation.dataQuality.resultSource}</span>
+                    <span>Source: {sourceLabel(recommendation.dataQuality.resultSource)}</span>
                     <span>Live check: {recommendation.dataQuality.liveLookupSucceeded ? "succeeded" : "not used"}</span>
                     {recommendation.dataQuality.demoMode ? <span>Demo mode</span> : null}
                   </div>
@@ -226,7 +249,7 @@ export function MoneymakerApp() {
                     </div>
 
                     <div className={styles.resultFooter}>
-                      <span className={`${styles.badge} ${styles[result.source]}`}>{result.source}</span>
+                      <span className={`${styles.badge} ${styles[result.source]}`}>{sourceLabel(result.source)}</span>
                       <span>{formatCurrency(result.savings)} value found</span>
                       <a href={result.url} target="_blank" rel="noreferrer">
                         Open <ArrowUpRight size={15} />
@@ -252,11 +275,65 @@ function MathRow({ label, value, tone = "discount" }: { label: string; value: nu
   );
 }
 
-function idleStatus(status: ApiState["status"]) {
-  if (status === "loading") {
-    return ["Starting recommendation run", "Identifying product", "Checking retailer data"];
+function StatusList({
+  activeIndex,
+  items,
+  mode
+}: {
+  activeIndex: number | null;
+  items: string[];
+  mode: "idle" | "loading" | "complete";
+}) {
+  return (
+    <ol className={styles.statusList}>
+      {items.map((item, index) => {
+        const isActive = mode === "loading" && index === activeIndex;
+        const isDone = mode === "complete" || (mode === "loading" && activeIndex != null && index < activeIndex);
+        const className = isActive
+          ? styles.statusActive
+          : isDone
+            ? styles.statusDone
+            : mode === "loading"
+              ? styles.statusPending
+              : "";
+
+        return (
+          <li className={className} key={`${item}-${index}`}>
+            <span className={styles.statusMarker}>
+              {isActive ? (
+                <Loader2 className={styles.spin} size={14} />
+              ) : isDone ? (
+                <Check size={14} />
+              ) : (
+                index + 1
+              )}
+            </span>
+            <span>{item}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function idleStatus() {
+  return ["Wallet loaded", "Hackathon fallback ready", "Deterministic scorer ready"];
+}
+
+function sourceLabel(source: string) {
+  if (source === "fallback") {
+    return "hackathon fallback";
   }
-  return ["Wallet loaded", "Cached demo products ready", "Deterministic scorer ready"];
+  if (source === "seeded") {
+    return "fallback";
+  }
+  if (source === "mixed") {
+    return "mixed";
+  }
+  if (source === "none") {
+    return "none";
+  }
+  return source;
 }
 
 function formatCurrency(value: number) {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { recommend } from "@/lib/recommend";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 20;
 
 const requestSchema = z.object({
   query: z.string().trim().min(2).max(500),
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       {
-        error: "Recommendation failed. Try a cached demo product like Patagonia Nano Puff."
+        error: "Recommendation failed. Try a hackathon fallback product like Patagonia Nano Puff."
       },
       { status: 500 }
     );

@@ -6,6 +6,11 @@ export function envFlag(name: string, fallback = false) {
   return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
 
+export function envPositiveInteger(name: string, fallback: number) {
+  const parsed = Number(process.env[name]);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export function hasBrightDataConfig() {
   return Boolean(process.env.BRIGHT_DATA_API_KEY || process.env.BRIGHTDATA_API_KEY || process.env.BRIGHTDATA_API_TOKEN);
 }

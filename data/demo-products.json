@@ -19,7 +19,7 @@
         "inStock": true,
         "url": "https://www.rei.com/search?q=Patagonia+Nano+Puff",
         "retailerPromo": { "label": "Estimated REI member dividend", "amount": 22.9 },
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       },
       {
@@ -31,7 +31,7 @@
         "inStock": true,
         "url": "https://www.backcountry.com/search?q=Patagonia%20Nano%20Puff",
         "retailerPromo": { "label": "Markdown versus reference price", "amount": 10 },
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       },
       {
@@ -42,7 +42,7 @@
         "currency": "USD",
         "inStock": true,
         "url": "https://www.patagonia.com/search/?q=Nano%20Puff",
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       },
       {
@@ -53,7 +53,7 @@
         "currency": "USD",
         "inStock": true,
         "url": "https://www.dickssportinggoods.com/search/SearchDisplay?searchTerm=Patagonia%20Nano%20Puff",
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       }
     ]
@@ -77,7 +77,7 @@
         "currency": "USD",
         "inStock": true,
         "url": "https://www.amazon.com/s?k=Apple+AirPods+Pro+2",
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       },
       {
@@ -89,7 +89,7 @@
         "inStock": true,
         "url": "https://www.target.com/s?searchTerm=Apple+AirPods+Pro+2",
         "retailerPromo": { "label": "Target Circle estimate", "amount": 5 },
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       },
       {
@@ -100,7 +100,7 @@
         "currency": "USD",
         "inStock": true,
         "url": "https://www.walmart.com/search?q=Apple%20AirPods%20Pro%202",
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       }
     ]
@@ -125,7 +125,7 @@
         "inStock": true,
         "url": "https://www.target.com/s?searchTerm=Ninja+DualBrew",
         "retailerPromo": { "label": "Target Circle kitchen promo", "amount": 10 },
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       },
       {
@@ -136,7 +136,7 @@
         "currency": "USD",
         "inStock": true,
         "url": "https://www.walmart.com/search?q=Ninja%20DualBrew",
-        "source": "cached",
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       },
       {
@@ -147,7 +147,148 @@
         "currency": "USD",
         "inStock": true,
         "url": "https://www.amazon.com/s?k=Ninja+DualBrew",
-        "source": "cached",
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      }
+    ]
+  },
+  {
+    "id": "gas-station-fillup",
+    "aliases": ["gas station", "gas fill up", "gas fillup", "chevron gas", "shell gas", "exxon gas", "fill up my car"],
+    "product": {
+      "title": "Gas Station Fill-Up",
+      "brand": "Gas Station",
+      "category": "gas",
+      "mccFamily": "gas",
+      "confidence": 0.92
+    },
+    "retailerOffers": [
+      {
+        "retailerId": "chevron",
+        "retailerName": "Chevron",
+        "productTitle": "Gas Station Fill-Up",
+        "price": 62,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.chevron.com/",
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "shell",
+        "retailerName": "Shell",
+        "productTitle": "Gas Station Fill-Up",
+        "price": 60,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.shell.us/",
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "exxon",
+        "retailerName": "Exxon",
+        "productTitle": "Gas Station Fill-Up",
+        "price": 64,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.exxon.com/",
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      }
+    ]
+  },
+  {
+    "id": "flight-ticket",
+    "aliases": ["flight ticket", "flight tickets", "plane ticket", "airline ticket", "book a flight", "lax to jfk flight"],
+    "product": {
+      "title": "Round-Trip Flight Ticket",
+      "brand": "Airline",
+      "category": "flights",
+      "mccFamily": "flights",
+      "confidence": 0.9
+    },
+    "retailerOffers": [
+      {
+        "retailerId": "delta",
+        "retailerName": "Delta Air Lines",
+        "productTitle": "Round-Trip Flight Ticket",
+        "price": 412,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.delta.com/",
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "united",
+        "retailerName": "United Airlines",
+        "productTitle": "Round-Trip Flight Ticket",
+        "price": 428,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.united.com/",
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "expedia",
+        "retailerName": "Expedia",
+        "productTitle": "Round-Trip Flight Ticket",
+        "price": 399,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.expedia.com/Flights",
+        "retailerPromo": { "label": "Bundled travel promo estimate", "amount": 12 },
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      }
+    ]
+  },
+  {
+    "id": "weekly-groceries",
+    "aliases": ["grocery", "groceries", "weekly groceries", "grocery run", "whole foods groceries", "kroger groceries"],
+    "product": {
+      "title": "Weekly Grocery Run",
+      "brand": "Grocery Store",
+      "category": "grocery",
+      "mccFamily": "grocery",
+      "confidence": 0.92
+    },
+    "retailerOffers": [
+      {
+        "retailerId": "whole_foods",
+        "retailerName": "Whole Foods Market",
+        "productTitle": "Weekly Grocery Run",
+        "price": 128,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.wholefoodsmarket.com/",
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "kroger",
+        "retailerName": "Kroger",
+        "productTitle": "Weekly Grocery Run",
+        "price": 118,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.kroger.com/",
+        "retailerPromo": { "label": "Weekly digital coupon estimate", "amount": 6 },
+        "source": "fallback",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "safeway",
+        "retailerName": "Safeway",
+        "productTitle": "Weekly Grocery Run",
+        "price": 122,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.safeway.com/",
+        "retailerPromo": { "label": "Club price estimate", "amount": 4 },
+        "source": "fallback",
         "fetchedAt": "2026-05-16T09:00:00-07:00"
       }
     ]

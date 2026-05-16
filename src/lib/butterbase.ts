@@ -1,4 +1,4 @@
-import { getButterbaseConfig } from "./env";
+import { envPositiveInteger, getButterbaseConfig } from "./env";
 import type { Product, ScoredOption } from "./types";
 
 export async function logRecommendationRun({
@@ -21,7 +21,7 @@ export async function logRecommendationRun({
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3000);
+  const timeout = setTimeout(() => controller.abort(), envPositiveInteger("BUTTERBASE_TIMEOUT_MS", 1500));
 
   try {
     const best = results[0];

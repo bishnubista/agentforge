@@ -1,5 +1,5 @@
-import { envFlag, hasBrightDataConfig } from "./env";
-import { getBrightDataSignal } from "./bright-data";
+import { envFlag, envPositiveInteger, hasBrightDataConfig } from "./env";
+import { getBrightDataOffers } from "./bright-data";
 import type { DemoProduct, Product, RecommendationWarning, RetailerOffer } from "./types";
 
 export type RetailerSearchResult = {
@@ -13,39 +13,62 @@ export type RetailerSearchResult = {
 
 export async function searchRetailers({
   product,
+  query,
   demoProduct
 }: {
   product: Product;
+  query: string;
   demoProduct?: DemoProduct;
 }): Promise<RetailerSearchResult> {
   const status: string[] = [];
   const warnings: RecommendationWarning[] = [];
   const useLiveData = envFlag("USE_LIVE_DATA", true);
   const demoMode = envFlag("DEMO_MODE", false);
+  const minRetailerResults = envPositiveInteger("MIN_RETAILER_RESULTS", 2);
   let liveLookupAttempted = false;
   let liveLookupSucceeded = false;
 
   status.push("Checking configured retailers");
 
-  if (useLiveData && hasBrightDataConfig()) {
+  if (useLiveData && demoProduct && shouldSkipShoppingLookup(product)) {
+    status.push("Live product shopping lookup does not apply to this category-spend scenario");
+  } else if (useLiveData && hasBrightDataConfig()) {
     liveLookupAttempted = true;
-    const signal = await getBrightDataSignal(product);
-    liveLookupSucceeded = signal.ok;
-    status.push(signal.message);
-    if (!signal.ok) {
+    const liveLookup = await getBrightDataOffers({ product, query });
+    liveLookupSucceeded = liveLookup.ok;
+    status.push(liveLookup.message);
+
+    if (liveLookup.offers.length >= minRetailerResults) {
+      status.push(`Using ${liveLookup.offers.length} live retailer prices`);
+      return {
+        offers: liveLookup.offers,
+        status,
+        warnings,
+        liveLookupAttempted,
+        liveLookupSucceeded,
+        demoMode
+      };
+    }
+
+    if (liveLookup.ok) {
+      warnings.push({
+        code: "LIVE_LOOKUP_INSUFFICIENT",
+        message: `Live lookup returned ${liveLookup.offers.length} usable retailer prices; using hackathon fallback coverage for a fuller comparison.`
+      });
+    } else {
       warnings.push({
         code: "LIVE_LOOKUP_FAILED",
-        message: "Live retailer lookup was attempted but did not return usable product offers."
+        message: "Live retailer lookup was attempted but did not return enough usable product offers."
       });
     }
   } else if (useLiveData) {
-    status.push("Bright Data key not found; using cached retailer payloads");
+    status.push("Bright Data key not found; using hackathon fallback coverage");
     warnings.push({
       code: "LIVE_LOOKUP_NOT_CONFIGURED",
       message: "Live retailer lookup is enabled, but no Bright Data credentials are configured."
     });
   } else {
-    status.push("Live data disabled; using cached retailer payloads");
+    status.push("Live data disabled; using hackathon fallback coverage");
     warnings.push({
       code: "LIVE_LOOKUP_DISABLED",
       message: "Live retailer lookup is disabled for this run."
@@ -53,10 +76,10 @@ export async function searchRetailers({
   }
 
   if (demoProduct) {
-    status.push(`Matched cached demo product with ${demoProduct.retailerOffers.length} retailer offers`);
+    status.push(`Using hackathon fallback coverage with ${demoProduct.retailerOffers.length} retailer offers`);
     warnings.push({
-      code: "CACHED_PRODUCT_DATA",
-      message: "Recommendations are based on cached demo product data, not a fresh retailer quote."
+      code: "HACKATHON_FALLBACK_DATA",
+      message: "Live lookup did not return enough retailer prices, so this run uses the hackathon fallback dataset."
     });
     return {
       offers: demoProduct.retailerOffers,
@@ -69,10 +92,10 @@ export async function searchRetailers({
   }
 
   if (demoMode) {
-    status.push("No cached product match; demo mode is using seeded retailer links");
+    status.push("No fallback product match; demo mode is using seeded hackathon retailer links");
     warnings.push({
-      code: "SEEDED_DEMO_DATA",
-      message: "This product was not found in the cache, so demo-mode seeded prices are being shown."
+      code: "SEEDED_HACKATHON_FALLBACK",
+      message: "This product was not found in the fallback dataset, so demo-mode seeded prices are being shown."
     });
     return {
       offers: seededRetailerOffers(product),
@@ -84,10 +107,10 @@ export async function searchRetailers({
     };
   }
 
-  status.push("No reliable retailer offers found for this product");
+  status.push("No reliable live or fallback retailer offers found for this product");
   warnings.push({
     code: "NO_RETAILER_OFFERS",
-    message: "No cached or live retailer offers were available, so the app did not fabricate a price comparison."
+    message: "No live or fallback retailer offers were available, so the app did not fabricate a price comparison."
   });
   return {
     offers: [],
@@ -97,6 +120,10 @@ export async function searchRetailers({
     liveLookupSucceeded,
     demoMode
   };
+}
+
+function shouldSkipShoppingLookup(product: Product) {
+  return ["flights", "gas", "grocery"].includes(product.mccFamily) || ["flights", "gas", "grocery"].includes(product.category);
 }
 
 function seededRetailerOffers(product: Product): RetailerOffer[] {

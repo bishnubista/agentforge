@@ -1,4 +1,5 @@
 import { cards, demoProducts, offers } from "../src/lib/data";
+import { parseBrightDataShoppingOffers } from "../src/lib/bright-data";
 import { scoreOptions } from "../src/lib/scoring";
 import { searchRetailers } from "../src/lib/search";
 import type { Product, RetailerOffer } from "../src/lib/types";
@@ -67,7 +68,7 @@ const gasOffer: RetailerOffer = {
   currency: "USD",
   inStock: true,
   url: "https://www.chevron.com/",
-  source: "cached",
+  source: "fallback",
   fetchedAt: "2026-05-16T12:00:00-07:00"
 };
 const gasResult = scoreOptions({
@@ -97,6 +98,7 @@ const previousUseLiveData = process.env.USE_LIVE_DATA;
 process.env.DEMO_MODE = "false";
 process.env.USE_LIVE_DATA = "false";
 const productionSearch = await searchRetailers({
+  query: "Uncached production-only item",
   product: {
     title: "Uncached production-only item",
     brand: "Unknown",
@@ -108,6 +110,37 @@ const productionSearch = await searchRetailers({
 assertEqual(productionSearch.offers.length, 0, "production mode must not fabricate seeded retailer prices");
 process.env.DEMO_MODE = previousDemoMode;
 process.env.USE_LIVE_DATA = previousUseLiveData;
+
+const liveOffers = parseBrightDataShoppingOffers(
+  {
+    shopping: [
+      {
+        title: "Apple AirPods Pro 2Apple AirPods Pro 2",
+        shop: "Target",
+        price: "$199.99",
+        old_price: "$249.99",
+        link: "https://www.target.com/p/apple-airpods-pro-2"
+      },
+      {
+        title: "Apple iPhone 16",
+        shop: "Apple",
+        price: "$829.00",
+        link: "https://www.apple.com/iphone/"
+      }
+    ]
+  },
+  {
+    title: "Apple AirPods Pro 2",
+    brand: "Apple",
+    category: "electronics",
+    mccFamily: "electronics",
+    confidence: 0.9
+  }
+);
+assertEqual(liveOffers.length, 1, "Bright Data parser should keep relevant shopping rows only");
+assertEqual(liveOffers[0]?.source, "live", "Bright Data parser should label parsed rows as live");
+assertEqual(liveOffers[0]?.retailerId, "target", "Bright Data parser should map known retailers");
+assertEqual(liveOffers[0]?.price, 199.99, "Bright Data parser should parse USD prices");
 
 console.table(
   results.map((result) => ({

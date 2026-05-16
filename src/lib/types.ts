@@ -1,4 +1,4 @@
-export type MoneySource = "live" | "cached" | "seeded";
+export type MoneySource = "live" | "fallback" | "seeded";
 
 export type RewardRule = {
   category: string;

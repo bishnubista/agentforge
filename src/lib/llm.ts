@@ -1,4 +1,5 @@
 import type { Product, ScoredOption } from "./types";
+import { envPositiveInteger } from "./env";
 
 type ProductExtraction = Product & {
   normalizedQuery?: string;
@@ -19,7 +20,7 @@ export async function extractProductWithLlm(query: string): Promise<ProductExtra
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 7000);
+  const timeout = setTimeout(() => controller.abort(), envPositiveInteger("LLM_TIMEOUT_MS", 4000));
 
   try {
     if (provider.endpoint !== "chat") {
@@ -111,7 +112,7 @@ export async function explainWithLlm({
 
 async function explainWithChatProvider(provider: ChatProvider, prompt: string) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 7000);
+  const timeout = setTimeout(() => controller.abort(), envPositiveInteger("LLM_TIMEOUT_MS", 4000));
 
   try {
     const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -155,7 +156,7 @@ async function explainWithChatProvider(provider: ChatProvider, prompt: string) {
 
 async function explainWithResponsesProvider(provider: ChatProvider, prompt: string) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 7000);
+  const timeout = setTimeout(() => controller.abort(), envPositiveInteger("LLM_TIMEOUT_MS", 4000));
 
   try {
     const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/v1/responses`, {

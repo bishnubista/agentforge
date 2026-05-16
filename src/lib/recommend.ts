@@ -20,14 +20,11 @@ export async function recommend({ query, selectedCardIds }: RecommendInput): Pro
   statusLog.push(`Loaded ${selectedCards.length} selected cards`);
 
   const identified = await identifyProduct(query);
-  statusLog.push(
-    identified.source === "cached_match"
-      ? `Identified cached product: ${identified.product.title}`
-      : `Identified product: ${identified.product.title}`
-  );
+  statusLog.push(`Identified product: ${identified.product.title}`);
 
   const retailerSearch = await searchRetailers({
     product: identified.product,
+    query,
     demoProduct: identified.demoProduct
   });
   statusLog.push(...retailerSearch.status);

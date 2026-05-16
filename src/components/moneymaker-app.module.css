@@ -254,13 +254,64 @@
   min-height: 184px;
 }
 
-.statusPanel ol {
+.statusList {
   display: grid;
   gap: 8px;
   margin: 0;
-  padding-left: 20px;
+  padding: 0;
   color: var(--muted);
   font-size: 0.92rem;
+  list-style: none;
+}
+
+.statusList li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.statusMarker {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.statusActive {
+  color: var(--foreground);
+  font-weight: 800;
+  transform: translateX(2px);
+}
+
+.statusActive .statusMarker {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.statusDone {
+  color: var(--accent-strong);
+}
+
+.statusDone .statusMarker {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.statusPending {
+  color: #8b948f;
 }
 
 .summaryPanel h2 {
@@ -415,7 +466,7 @@
   text-transform: uppercase;
 }
 
-.cached {
+.fallback {
   background: #e6eefc;
   color: #254f92;
 }
