@@ -1,0 +1,210 @@
+[
+  {
+    "id": "starbucks",
+    "name": "Starbucks",
+    "domain": "starbucks.com",
+    "aliases": ["starbucks", "starbucks coffee", "startbucks"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "dunkin",
+    "name": "Dunkin'",
+    "domain": "dunkindonuts.com",
+    "aliases": ["dunkin", "dunkin donuts", "dunkin'"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "chipotle",
+    "name": "Chipotle",
+    "domain": "chipotle.com",
+    "aliases": ["chipotle", "chipotle mexican grill"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "mcdonalds",
+    "name": "McDonald's",
+    "domain": "mcdonalds.com",
+    "aliases": ["mcdonalds", "mcdonald's", "mcdonalds restaurant"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "blue_bottle",
+    "name": "Blue Bottle Coffee",
+    "domain": "bluebottlecoffee.com",
+    "aliases": ["blue bottle", "blue bottle coffee"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "peets",
+    "name": "Peet's Coffee",
+    "domain": "peets.com",
+    "aliases": ["peets", "peet's", "peets coffee", "peet's coffee"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "sweetgreen",
+    "name": "Sweetgreen",
+    "domain": "sweetgreen.com",
+    "aliases": ["sweetgreen", "sweet green"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "doordash",
+    "name": "DoorDash",
+    "domain": "doordash.com",
+    "aliases": ["doordash", "door dash"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "uber_eats",
+    "name": "Uber Eats",
+    "domain": "ubereats.com",
+    "aliases": ["uber eats", "ubereats"],
+    "category": "dining",
+    "mccFamily": "dining"
+  },
+  {
+    "id": "costco",
+    "name": "Costco",
+    "domain": "costco.com",
+    "aliases": ["costco", "costco wholesale"],
+    "category": "grocery",
+    "mccFamily": "grocery"
+  },
+  {
+    "id": "amazon",
+    "name": "Amazon",
+    "domain": "amazon.com",
+    "aliases": ["amazon", "amazon.com"],
+    "category": "general_merchandise",
+    "mccFamily": "general_merchandise"
+  },
+  {
+    "id": "target",
+    "name": "Target",
+    "domain": "target.com",
+    "aliases": ["target", "target store"],
+    "category": "general_merchandise",
+    "mccFamily": "general_merchandise"
+  },
+  {
+    "id": "walmart",
+    "name": "Walmart",
+    "domain": "walmart.com",
+    "aliases": ["walmart", "wal-mart"],
+    "category": "general_merchandise",
+    "mccFamily": "general_merchandise"
+  },
+  {
+    "id": "home_depot",
+    "name": "The Home Depot",
+    "domain": "homedepot.com",
+    "aliases": ["home depot", "the home depot"],
+    "category": "home_goods",
+    "mccFamily": "home_goods"
+  },
+  {
+    "id": "lowes",
+    "name": "Lowe's",
+    "domain": "lowes.com",
+    "aliases": ["lowes", "lowe's"],
+    "category": "home_goods",
+    "mccFamily": "home_goods"
+  },
+  {
+    "id": "sephora",
+    "name": "Sephora",
+    "domain": "sephora.com",
+    "aliases": ["sephora"],
+    "category": "general_merchandise",
+    "mccFamily": "general_merchandise"
+  },
+  {
+    "id": "walgreens",
+    "name": "Walgreens",
+    "domain": "walgreens.com",
+    "aliases": ["walgreens", "walgreen"],
+    "category": "general_merchandise",
+    "mccFamily": "general_merchandise"
+  },
+  {
+    "id": "whole_foods",
+    "name": "Whole Foods Market",
+    "domain": "wholefoodsmarket.com",
+    "aliases": ["whole foods", "whole foods market"],
+    "category": "grocery",
+    "mccFamily": "grocery"
+  },
+  {
+    "id": "kroger",
+    "name": "Kroger",
+    "domain": "kroger.com",
+    "aliases": ["kroger"],
+    "category": "grocery",
+    "mccFamily": "grocery"
+  },
+  {
+    "id": "safeway",
+    "name": "Safeway",
+    "domain": "safeway.com",
+    "aliases": ["safeway"],
+    "category": "grocery",
+    "mccFamily": "grocery"
+  },
+  {
+    "id": "chevron",
+    "name": "Chevron",
+    "domain": "chevron.com",
+    "aliases": ["chevron", "chevron gas"],
+    "category": "gas",
+    "mccFamily": "gas"
+  },
+  {
+    "id": "shell",
+    "name": "Shell",
+    "domain": "shell.us",
+    "aliases": ["shell", "shell gas"],
+    "category": "gas",
+    "mccFamily": "gas"
+  },
+  {
+    "id": "exxon",
+    "name": "Exxon",
+    "domain": "exxon.com",
+    "aliases": ["exxon", "exxonmobil", "exxon mobil"],
+    "category": "gas",
+    "mccFamily": "gas"
+  },
+  {
+    "id": "delta",
+    "name": "Delta Air Lines",
+    "domain": "delta.com",
+    "aliases": ["delta", "delta airlines", "delta air lines"],
+    "category": "travel",
+    "mccFamily": "travel"
+  },
+  {
+    "id": "united",
+    "name": "United Airlines",
+    "domain": "united.com",
+    "aliases": ["united", "united airlines"],
+    "category": "travel",
+    "mccFamily": "travel"
+  },
+  {
+    "id": "expedia",
+    "name": "Expedia",
+    "domain": "expedia.com",
+    "aliases": ["expedia"],
+    "category": "travel",
+    "mccFamily": "travel"
+  }
+]

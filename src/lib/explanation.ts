@@ -20,6 +20,26 @@ export function explainRecommendation(product: Product, results: ScoredOption[])
   return [lead, reason, comparison].filter(Boolean).join(" ");
 }
 
+export function explainCardPickRecommendation(product: Product, results: ScoredOption[], benchmarkSpend: number) {
+  const best = results[0];
+  const runnerUp = results[1];
+
+  if (!best) {
+    return `I could not find enough selected-card value for ${product.title}.`;
+  }
+
+  const strongestLine = [...best.lineItems].sort((a, b) => b.amount - a.amount)[0];
+  const lead = `For an estimated ${formatCurrency(benchmarkSpend)} ${product.title} purchase, ${best.cardName} gives the best value.`;
+  const reason = strongestLine
+    ? `${strongestLine.label} is worth ${formatCurrency(strongestLine.amount)}.`
+    : `It earns ${formatCurrency(best.savings)} in estimated card value.`;
+  const comparison = runnerUp
+    ? `That is ${formatCurrency(best.savings - runnerUp.savings)} more value than the next selected card.`
+    : "";
+
+  return [lead, reason, comparison].filter(Boolean).join(" ");
+}
+
 export function providerName(provider: string) {
   if (provider === "qwen") {
     return "Qwen Cloud";

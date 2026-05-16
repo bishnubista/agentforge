@@ -1,4 +1,4 @@
-export type MoneySource = "live" | "fallback" | "seeded";
+export type MoneySource = "live" | "fallback" | "seeded" | "estimated";
 
 export type RewardRule = {
   category: string;
@@ -49,6 +49,15 @@ export type Retailer = {
   id: string;
   name: string;
   domain: string;
+};
+
+export type Merchant = {
+  id: string;
+  name: string;
+  domain?: string;
+  aliases: string[];
+  category: string;
+  mccFamily: string;
 };
 
 export type Product = {

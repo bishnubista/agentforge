@@ -1007,6 +1007,11 @@
   color: var(--warning);
 }
 
+.estimated {
+  background: #e3f5ef;
+  color: var(--green-700);
+}
+
 .live {
   background: var(--green-100);
   color: var(--green-700);

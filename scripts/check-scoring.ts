@@ -1,6 +1,7 @@
 import { cards, demoProducts, offers } from "../src/lib/data";
 import { parseBrightDataShoppingOffers } from "../src/lib/bright-data";
 import { findDemoProduct, productMatchesQuery } from "../src/lib/product";
+import { resolveQueryIntent, scoreCardPickIntent } from "../src/lib/intent";
 import { scoreOptions } from "../src/lib/scoring";
 import { searchRetailers } from "../src/lib/search";
 import type { Product, RetailerOffer } from "../src/lib/types";
@@ -109,6 +110,47 @@ assert(
   }),
   "LLM extraction validation should allow short distinctive model-number searches"
 );
+
+const starbucksIntent = await resolveQueryIntent("Starbucks");
+assertEqual(starbucksIntent.kind, "merchant_card_pick", "bare Starbucks should route as a merchant card pick");
+if (starbucksIntent.kind !== "merchant_card_pick") {
+  throw new Error("Starbucks intent should be narrowed to merchant_card_pick.");
+}
+const misspelledStarbucksIntent = await resolveQueryIntent("Startbucks");
+assertEqual(
+  misspelledStarbucksIntent.kind,
+  "merchant_card_pick",
+  "common Starbucks typo should route as a merchant card pick"
+);
+const starbucksCardResults = scoreCardPickIntent({
+  intent: starbucksIntent,
+  cards: selectedCards,
+  offers,
+  now: new Date("2026-05-16T12:00:00-07:00")
+});
+assertEqual(starbucksCardResults[0]?.cardId, "amex_gold", "Amex Gold should win $100 Starbucks benchmark among selected demo cards");
+assertEqual(starbucksCardResults[0]?.source, "estimated", "merchant card picks should be labeled as estimated");
+
+const starbucksProductIntent = await resolveQueryIntent("Starbucks Frappuccino bottle");
+assertEqual(
+  starbucksProductIntent.kind,
+  "product_price_compare",
+  "Starbucks packaged products should still route to product price comparison"
+);
+const diningIntent = await resolveQueryIntent("best card for dining");
+assertEqual(diningIntent.kind, "category_card_pick", "best card for dining should route as a category card pick");
+const costcoGroceriesIntent = await resolveQueryIntent("Costco groceries");
+assertEqual(costcoGroceriesIntent.kind, "merchant_card_pick", "merchant plus category queries should route as merchant card picks");
+const dunkinIntent = await resolveQueryIntent("Dunkin");
+assertEqual(dunkinIntent.kind, "merchant_card_pick", "common dining vendors should route without LLM fallback");
+const homeDepotIntent = await resolveQueryIntent("Home Depot");
+assertEqual(homeDepotIntent.kind, "merchant_card_pick", "common home improvement vendors should route without LLM fallback");
+const doorDashIntent = await resolveQueryIntent("DoorDash");
+assertEqual(doorDashIntent.kind, "merchant_card_pick", "common delivery vendors should route without LLM fallback");
+const blueBottleIntent = await resolveQueryIntent("Blue Bottle Coffee");
+assertEqual(blueBottleIntent.kind, "merchant_card_pick", "coffee shop brands with product cue words should route as merchants when exact");
+const blueBottleBeansIntent = await resolveQueryIntent("Blue Bottle coffee beans");
+assertEqual(blueBottleBeansIntent.kind, "product_price_compare", "packaged coffee beans should still route to product price comparison");
 
 const previousDemoMode = process.env.DEMO_MODE;
 const previousUseLiveData = process.env.USE_LIVE_DATA;

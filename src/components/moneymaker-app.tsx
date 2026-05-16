@@ -543,12 +543,12 @@ function RunPanel({
                 </div>
                 <div className={styles.priceBlock}>
                   <span>{formatCurrency(result.effectivePrice)}</span>
-                  <small>effective</small>
+                  <small>{result.source === "estimated" ? "after rewards" : "effective"}</small>
                 </div>
               </div>
 
               <div className={styles.mathRows}>
-                <MathRow label="List price" value={result.listPrice} tone="base" />
+                <MathRow label={result.source === "estimated" ? "Benchmark spend" : "List price"} value={result.listPrice} tone="base" />
                 {result.lineItems.map((lineItem) => (
                   <MathRow key={`${lineItem.kind}-${lineItem.label}`} label={lineItem.label} value={lineItem.amount} />
                 ))}
@@ -556,7 +556,7 @@ function RunPanel({
 
               <div className={styles.resultFooter}>
                 <span className={`${styles.badge} ${styles[result.source]}`}>{sourceLabel(result.source)}</span>
-                <span>{formatCurrency(result.savings)} value found</span>
+                <span>{formatCurrency(result.savings)} {result.source === "estimated" ? "estimated value" : "value found"}</span>
                 <a href={result.url} target="_blank" rel="noreferrer">
                   Open <ArrowUpRight size={15} />
                 </a>
@@ -629,6 +629,9 @@ function sourceLabel(source: string) {
   }
   if (source === "seeded") {
     return "fallback";
+  }
+  if (source === "estimated") {
+    return "card estimate";
   }
   if (source === "mixed") {
     return "mixed";
