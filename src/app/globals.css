@@ -1,16 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..700,0..100&family=Inter:wght@300..600&display=swap");
+
 :root {
+  --font-serif: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --background: #faf8f5;
   --foreground: #161d1a;
   --muted: #5a615d;
-  --line: #e0d8ca;
+  --line: #e0d9cf;
   --panel: #ffffff;
-  --panel-soft: #f3eee6;
+  --panel-soft: #f2ece2;
   --accent: #0a2e25;
-  --accent-strong: #14604d;
+  --accent-strong: #21634f;
   --accent-soft: #dceee7;
+  --green-900: #0a2e25;
+  --green-800: #0f4538;
+  --green-700: #21634f;
+  --green-100: #dceee7;
+  --cream-50: #fbf8f1;
+  --cream-100: #f5efe2;
+  --cream-200: #eae0cc;
   --gold: #c8961f;
   --gold-soft: #f6ebd0;
   --warning: #946414;
+  --ink-400: #8a918d;
   --shadow: 0 18px 48px rgba(24, 20, 16, 0.08);
 }
 
@@ -26,13 +38,9 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: var(--font-sans);
   letter-spacing: 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(250, 248, 245, 0) 340px),
-    var(--background);
+  background: var(--background);
 }
 
 button,

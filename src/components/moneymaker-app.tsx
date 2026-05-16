@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Check, CreditCard, Loader2, Search, ShieldCheck, WalletCards } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BarChart3, Check, CreditCard, Loader2, Search, Sparkles, WalletCards } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cards } from "@/lib/data";
 import { logger } from "@/lib/logger";
@@ -8,7 +8,7 @@ import type { Recommendation } from "@/lib/types";
 import styles from "./moneymaker-app.module.css";
 
 const STORAGE_KEY = "moneymaker:selected-cards";
-const DEFAULT_QUERY = "Patagonia Nano Puff Men's Medium Black";
+const DEFAULT_QUERY = "";
 const RUN_STEPS = [
   "Identifying product",
   "Checking live and fallback coverage",
@@ -154,9 +154,11 @@ export function MoneymakerApp() {
     <main className={styles.shell}>
       <section className={styles.workbench}>
         <header className={styles.topbar}>
-          <button className={styles.brand} type="button" onClick={() => setActiveView("search")} aria-label="Moneymaker home">
-            <span>m</span>
-            <strong>moneymaker</strong>
+          <button className={styles.brand} type="button" onClick={() => setActiveView("search")} aria-label="Rewardr home">
+            <span>r</span>
+            <strong>
+              reward<em>r</em>
+            </strong>
           </button>
           <nav className={styles.nav} aria-label="Primary">
             <button
@@ -183,8 +185,8 @@ export function MoneymakerApp() {
               onClick={() => setActiveView("results")}
               aria-current={activeView === "results" ? "page" : undefined}
             >
-              <ShieldCheck size={16} />
-              Results
+              <BarChart3 size={16} />
+              Dashboard
             </button>
           </nav>
         </header>
@@ -193,13 +195,16 @@ export function MoneymakerApp() {
           <>
             <section className={styles.hero}>
               <div className={styles.heroCopy}>
-                <p className={styles.kicker}>AI-powered checkout agent</p>
+                <p className={styles.kicker}>
+                  <Sparkles size={14} />
+                  AI-Powered Agent
+                </p>
                 <h1>
                   What are you <em>buying?</em>
                 </h1>
                 <p>
-                  A product, a brand, a store. The agent compares retailer prices, wallet rewards, and offers before
-                  choosing the card that actually wins.
+                  A product, a brand, a store. The AI agent searches the web in real-time, compares prices, and picks
+                  the best card from your wallet.
                 </p>
 
                 <form className={styles.searchPanel} onSubmit={submitRecommendation}>
@@ -216,9 +221,11 @@ export function MoneymakerApp() {
                       {apiState.status === "loading" ? (
                         <Loader2 className={styles.spin} size={18} />
                       ) : (
-                        <Search size={18} />
+                        <>
+                          <span>Ask</span>
+                          <ArrowRight size={16} />
+                        </>
                       )}
-                      <span>Ask</span>
                     </button>
                   </div>
                 </form>
@@ -237,54 +244,188 @@ export function MoneymakerApp() {
                   ))}
                 </div>
               </div>
-
-              <aside className={styles.savingsCard} aria-label="Savings summary">
-                <p>Saved YTD</p>
-                <strong>$1,247</strong>
-                <span>
-                  across 47 purchases with {selectedCards.length} wallet cards ready for this run.
-                </span>
-                <div aria-hidden="true" />
-              </aside>
             </section>
 
-            <div className={styles.liveLabel}>
-              <span />
-              <p>Live run - see what the agent does</p>
-            </div>
+            <LiveExample selectedCardCount={selectedCards.length} />
 
             <Alerts apiState={apiState} recommendation={recommendation} />
 
-            <div className={styles.grid}>
-              <WalletPanel selectedCardIds={selectedCardIds} onToggleCard={toggleCard} />
-
-              <section className={styles.mainPanel}>
+            {apiState.status !== "idle" || recommendation ? (
+              <section className={styles.searchRun}>
                 <RunPanel apiState={apiState} loadingStepIndex={loadingStepIndex} recommendation={recommendation} />
               </section>
-            </div>
+            ) : null}
           </>
         ) : null}
 
         {activeView === "wallet" ? (
           <section className={styles.walletOnly}>
+            <ViewIntro
+              icon={<WalletCards size={14} />}
+              label="Your wallet"
+              title="Cards we'll optimize across."
+              copy="Just the card types - we never ask for numbers, logins, or balances. Add or remove anytime."
+            />
+            <WalletStats selectedCardCount={selectedCards.length} />
             <WalletPanel selectedCardIds={selectedCardIds} onToggleCard={toggleCard} expanded />
           </section>
         ) : null}
 
         {activeView === "results" ? (
           <>
-            <div className={styles.liveLabel}>
-              <span />
-              <p>Results - ranked card choices</p>
-            </div>
+            <ViewIntro
+              icon={<BarChart3 size={14} />}
+              label="Your savings"
+              title="Dashboard"
+              copy="Tracking what you've saved by following the agent's recommendations. Real numbers, real math."
+            />
+            <DashboardStats />
             <Alerts apiState={apiState} recommendation={recommendation} />
             <section className={styles.resultsOnly}>
               <RunPanel apiState={apiState} loadingStepIndex={loadingStepIndex} recommendation={recommendation} />
             </section>
           </>
         ) : null}
+
+        <footer className={styles.footer}>
+          <span>Rewardr - AI-powered savings agent</span>
+          <span>No PII - No card numbers - Honest math</span>
+        </footer>
       </section>
     </main>
+  );
+}
+
+function LiveExample({ selectedCardCount }: { selectedCardCount: number }) {
+  const prices = [
+    { retailer: "Walmart", price: "$189", best: true },
+    { retailer: "Apple", price: "$249" },
+    { retailer: "Best Buy", price: "$229" },
+    { retailer: "Amazon", price: "$199" }
+  ];
+
+  return (
+    <section className={styles.liveExample} aria-label="Live example">
+      <div className={styles.liveMain}>
+        <div className={styles.liveLabel}>
+          <span />
+          <p>
+            Live example &middot; <em>see what the agent does</em>
+          </p>
+        </div>
+        <div className={styles.exampleCard}>
+          <div className={styles.exampleHeader}>
+            <strong>&quot;AirPods Pro 2, USB-C model&quot;</strong>
+            <span>
+              12 retailers scanned
+              <em>{selectedCardCount} cards evaluated</em>
+            </span>
+          </div>
+          <div className={styles.priceGrid}>
+            {prices.map((item) => (
+              <div className={item.best ? styles.bestPrice : ""} key={item.retailer}>
+                <span>{item.retailer}</span>
+                <strong>{item.price}</strong>
+              </div>
+            ))}
+          </div>
+          <div className={styles.exampleResult}>
+            <strong>
+              <Sparkles size={14} />
+              Buy at Walmart. Use Chase Freedom Flex.
+            </strong>
+            <span>
+              You save
+              <em>$68</em>
+            </span>
+          </div>
+        </div>
+      </div>
+      <aside className={styles.savingsCard} aria-label="Savings summary">
+        <p>Saved YTD</p>
+        <strong>$1,247</strong>
+        <span>across 47 purchases - averaging 5% return on tracked spend.</span>
+        <div aria-hidden="true" />
+      </aside>
+    </section>
+  );
+}
+
+function ViewIntro({
+  icon,
+  label,
+  title,
+  copy
+}: {
+  icon: React.ReactNode;
+  label: string;
+  title: string;
+  copy: string;
+}) {
+  return (
+    <div className={styles.viewIntro}>
+      <p className={styles.kicker}>
+        {icon}
+        {label}
+      </p>
+      <h1>{title}</h1>
+      <p>{copy}</p>
+    </div>
+  );
+}
+
+function WalletStats({ selectedCardCount }: { selectedCardCount: number }) {
+  const previewCards = cards.slice(0, 4);
+
+  return (
+    <section className={styles.walletStats} aria-label="Wallet summary">
+      <div className={styles.walletStatCopy}>
+        <span>In your wallet</span>
+        <strong>
+          {selectedCardCount}
+          <em>cards</em>
+        </strong>
+        <p>
+          The agent evaluates every card on every query - category bonuses, rotating calendars, portal multipliers, and
+          active offers.
+        </p>
+      </div>
+      <div className={styles.issuerCount}>
+        <span>Issuers covered</span>
+        <strong>{new Set(previewCards.map((card) => card.issuer)).size}</strong>
+      </div>
+      <div className={styles.walletPreview}>
+        {previewCards.map((card) => (
+          <div className={styles.walletMiniCard} key={card.id} style={{ background: card.art.background, color: card.art.foreground }}>
+            <span>{card.issuer}</span>
+            <strong>{card.displayName.replace(card.issuer, "").trim() || card.displayName}</strong>
+            <em>{card.network.toUpperCase()}</em>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DashboardStats() {
+  return (
+    <section className={styles.dashboardStats} aria-label="Savings summary">
+      <div>
+        <span>Saved year to date</span>
+        <strong>$1,247</strong>
+        <p>on $24,800 in tracked spend</p>
+      </div>
+      <div>
+        <span>Effective return rate</span>
+        <strong>5.0%</strong>
+        <p>vs. 1.2% before Rewardr</p>
+      </div>
+      <div>
+        <span>This month</span>
+        <strong>$184</strong>
+        <p>across 9 recommendations</p>
+      </div>
+    </section>
   );
 }
 
