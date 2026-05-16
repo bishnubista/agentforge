@@ -1,0 +1,147 @@
+[
+  {
+    "id": "amex_gold",
+    "displayName": "American Express Gold",
+    "issuer": "American Express",
+    "network": "Amex",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": { "background": "#d9b56f", "foreground": "#2b2112" },
+    "rewards": [
+      { "category": "dining", "multiplier": 4, "label": "4x dining" },
+      { "category": "grocery", "multiplier": 4, "label": "4x US grocery" },
+      { "category": "flights", "multiplier": 3, "label": "3x flights" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "chase_sapphire_preferred",
+    "displayName": "Chase Sapphire Preferred",
+    "issuer": "Chase",
+    "network": "Visa",
+    "pointValueCents": 1.25,
+    "baseRewardRate": 1,
+    "art": { "background": "#244f8f", "foreground": "#f8fbff" },
+    "rewards": [
+      { "category": "dining", "multiplier": 3, "label": "3x dining" },
+      { "category": "travel", "multiplier": 2, "label": "2x travel" }
+    ],
+    "portalBoosts": [
+      { "retailerId": "rei", "extraMultiplier": 4, "label": "4x Chase portal boost at REI" },
+      { "retailerId": "backcountry", "extraMultiplier": 3, "label": "3x Chase portal boost at Backcountry" }
+    ]
+  },
+  {
+    "id": "discover_it",
+    "displayName": "Discover it Cash Back",
+    "issuer": "Discover",
+    "network": "Discover",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": { "background": "#f2a33a", "foreground": "#1f1607" },
+    "rewards": [
+      {
+        "category": "gas",
+        "multiplier": 5,
+        "label": "5% rotating gas category",
+        "cap": 1500,
+        "capPeriod": "quarter"
+      },
+      {
+        "category": "dining",
+        "multiplier": 5,
+        "label": "5% rotating restaurants",
+        "cap": 1500,
+        "capPeriod": "quarter"
+      }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "citi_custom_cash",
+    "displayName": "Citi Custom Cash",
+    "issuer": "Citi",
+    "network": "Mastercard",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": { "background": "#0f6c81", "foreground": "#f8ffff" },
+    "rewards": [
+      {
+        "category": "grocery",
+        "multiplier": 5,
+        "label": "5% top eligible category",
+        "cap": 500,
+        "capPeriod": "month"
+      },
+      {
+        "category": "home_goods",
+        "multiplier": 5,
+        "label": "5% top eligible category",
+        "cap": 500,
+        "capPeriod": "month"
+      }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "capital_one_venture_x",
+    "displayName": "Capital One Venture X",
+    "issuer": "Capital One",
+    "network": "Visa",
+    "pointValueCents": 1,
+    "baseRewardRate": 2,
+    "art": { "background": "#20242b", "foreground": "#f7f3e9" },
+    "rewards": [
+      { "category": "travel", "multiplier": 5, "label": "5x travel portal baseline" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "amazon_prime_visa",
+    "displayName": "Prime Visa",
+    "issuer": "Chase",
+    "network": "Visa",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": { "background": "#232f3e", "foreground": "#ffffff" },
+    "rewards": [
+      { "retailerId": "amazon", "category": "any", "multiplier": 5, "label": "5% at Amazon" },
+      { "category": "gas", "multiplier": 2, "label": "2% gas" },
+      { "category": "dining", "multiplier": 2, "label": "2% dining" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "chase_freedom_flex",
+    "displayName": "Chase Freedom Flex",
+    "issuer": "Chase",
+    "network": "Mastercard",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": { "background": "#184f76", "foreground": "#f5fbff" },
+    "rewards": [
+      {
+        "category": "grocery",
+        "multiplier": 5,
+        "label": "5% rotating grocery category",
+        "cap": 1500,
+        "capPeriod": "quarter"
+      },
+      { "category": "dining", "multiplier": 3, "label": "3% dining" }
+    ],
+    "portalBoosts": [
+      { "retailerId": "walmart", "extraMultiplier": 2, "label": "2x Chase shopping boost" }
+    ]
+  },
+  {
+    "id": "wells_fargo_active_cash",
+    "displayName": "Wells Fargo Active Cash",
+    "issuer": "Wells Fargo",
+    "network": "Visa",
+    "pointValueCents": 1,
+    "baseRewardRate": 2,
+    "art": { "background": "#a32120", "foreground": "#fff7ed" },
+    "rewards": [],
+    "portalBoosts": []
+  }
+]

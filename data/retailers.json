@@ -1,0 +1,10 @@
+[
+  { "id": "amazon", "name": "Amazon", "domain": "amazon.com" },
+  { "id": "rei", "name": "REI", "domain": "rei.com" },
+  { "id": "backcountry", "name": "Backcountry", "domain": "backcountry.com" },
+  { "id": "patagonia", "name": "Patagonia", "domain": "patagonia.com" },
+  { "id": "dicks", "name": "Dick's Sporting Goods", "domain": "dickssportinggoods.com" },
+  { "id": "moosejaw", "name": "Moosejaw", "domain": "moosejaw.com" },
+  { "id": "target", "name": "Target", "domain": "target.com" },
+  { "id": "walmart", "name": "Walmart", "domain": "walmart.com" }
+]

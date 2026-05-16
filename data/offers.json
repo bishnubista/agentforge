@@ -1,0 +1,68 @@
+[
+  {
+    "id": "amex_rei_20_100",
+    "cardId": "amex_gold",
+    "retailerId": "rei",
+    "merchant": "REI",
+    "type": "dollar_off",
+    "value": 20,
+    "minSpend": 100,
+    "validFrom": "2026-05-01",
+    "validTo": "2026-06-30",
+    "source": "manual",
+    "label": "$20 back after $100 at REI"
+  },
+  {
+    "id": "amex_patagonia_15_50",
+    "cardId": "amex_gold",
+    "retailerId": "patagonia",
+    "merchant": "Patagonia",
+    "type": "dollar_off",
+    "value": 15,
+    "minSpend": 50,
+    "validFrom": "2026-05-01",
+    "validTo": "2026-06-30",
+    "source": "manual",
+    "label": "$15 back after $50 at Patagonia"
+  },
+  {
+    "id": "chase_backcountry_10",
+    "cardId": "chase_sapphire_preferred",
+    "retailerId": "backcountry",
+    "merchant": "Backcountry",
+    "type": "percent_off",
+    "value": 10,
+    "maxValue": 15,
+    "minSpend": 100,
+    "validFrom": "2026-05-01",
+    "validTo": "2026-06-30",
+    "source": "manual",
+    "label": "10% back at Backcountry, up to $15"
+  },
+  {
+    "id": "citi_target_10_100",
+    "cardId": "citi_custom_cash",
+    "retailerId": "target",
+    "merchant": "Target",
+    "type": "dollar_off",
+    "value": 10,
+    "minSpend": 100,
+    "validFrom": "2026-05-01",
+    "validTo": "2026-05-31",
+    "source": "manual",
+    "label": "$10 back after $100 at Target"
+  },
+  {
+    "id": "wells_walmart_5_75",
+    "cardId": "wells_fargo_active_cash",
+    "retailerId": "walmart",
+    "merchant": "Walmart",
+    "type": "dollar_off",
+    "value": 5,
+    "minSpend": 75,
+    "validFrom": "2026-05-01",
+    "validTo": "2026-06-15",
+    "source": "manual",
+    "label": "$5 back after $75 at Walmart"
+  }
+]

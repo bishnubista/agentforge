@@ -1,0 +1,155 @@
+[
+  {
+    "id": "patagonia-nano-puff",
+    "aliases": ["patagonia nano puff", "nano puff", "patagonia jacket", "patagonia nano puff men's medium black"],
+    "product": {
+      "title": "Patagonia Nano Puff Jacket",
+      "brand": "Patagonia",
+      "category": "outdoor_apparel",
+      "mccFamily": "sporting_goods",
+      "confidence": 0.9
+    },
+    "retailerOffers": [
+      {
+        "retailerId": "rei",
+        "retailerName": "REI",
+        "productTitle": "Patagonia Nano Puff Jacket",
+        "price": 229,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.rei.com/search?q=Patagonia+Nano+Puff",
+        "retailerPromo": { "label": "Estimated REI member dividend", "amount": 22.9 },
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "backcountry",
+        "retailerName": "Backcountry",
+        "productTitle": "Patagonia Nano Puff Jacket",
+        "price": 219,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.backcountry.com/search?q=Patagonia%20Nano%20Puff",
+        "retailerPromo": { "label": "Markdown versus reference price", "amount": 10 },
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "patagonia",
+        "retailerName": "Patagonia",
+        "productTitle": "Patagonia Nano Puff Jacket",
+        "price": 229,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.patagonia.com/search/?q=Nano%20Puff",
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "dicks",
+        "retailerName": "Dick's Sporting Goods",
+        "productTitle": "Patagonia Nano Puff Jacket",
+        "price": 229,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.dickssportinggoods.com/search/SearchDisplay?searchTerm=Patagonia%20Nano%20Puff",
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      }
+    ]
+  },
+  {
+    "id": "airpods-pro-2",
+    "aliases": ["airpods pro", "airpods pro 2", "apple airpods pro", "apple airpods pro 2"],
+    "product": {
+      "title": "Apple AirPods Pro 2",
+      "brand": "Apple",
+      "category": "electronics",
+      "mccFamily": "electronics",
+      "confidence": 0.88
+    },
+    "retailerOffers": [
+      {
+        "retailerId": "amazon",
+        "retailerName": "Amazon",
+        "productTitle": "Apple AirPods Pro 2",
+        "price": 189.99,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.amazon.com/s?k=Apple+AirPods+Pro+2",
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "target",
+        "retailerName": "Target",
+        "productTitle": "Apple AirPods Pro 2",
+        "price": 199.99,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.target.com/s?searchTerm=Apple+AirPods+Pro+2",
+        "retailerPromo": { "label": "Target Circle estimate", "amount": 5 },
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "walmart",
+        "retailerName": "Walmart",
+        "productTitle": "Apple AirPods Pro 2",
+        "price": 194,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.walmart.com/search?q=Apple%20AirPods%20Pro%202",
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      }
+    ]
+  },
+  {
+    "id": "ninja-dualbrew",
+    "aliases": ["ninja dualbrew", "ninja coffee maker", "ninja dualbrew coffee maker"],
+    "product": {
+      "title": "Ninja DualBrew Coffee Maker",
+      "brand": "Ninja",
+      "category": "kitchen_appliance",
+      "mccFamily": "home_goods",
+      "confidence": 0.84
+    },
+    "retailerOffers": [
+      {
+        "retailerId": "target",
+        "retailerName": "Target",
+        "productTitle": "Ninja DualBrew Coffee Maker",
+        "price": 139.99,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.target.com/s?searchTerm=Ninja+DualBrew",
+        "retailerPromo": { "label": "Target Circle kitchen promo", "amount": 10 },
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "walmart",
+        "retailerName": "Walmart",
+        "productTitle": "Ninja DualBrew Coffee Maker",
+        "price": 129,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.walmart.com/search?q=Ninja%20DualBrew",
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      },
+      {
+        "retailerId": "amazon",
+        "retailerName": "Amazon",
+        "productTitle": "Ninja DualBrew Coffee Maker",
+        "price": 134.99,
+        "currency": "USD",
+        "inStock": true,
+        "url": "https://www.amazon.com/s?k=Ninja+DualBrew",
+        "source": "cached",
+        "fetchedAt": "2026-05-16T09:00:00-07:00"
+      }
+    ]
+  }
+]
