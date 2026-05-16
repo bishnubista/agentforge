@@ -12,6 +12,27 @@ Users select the cards they carry, enter a product URL or product name, and rece
 - CSS Modules
 - Static JSON seed data with optional live vendor adapters
 
+## Vendors Used
+
+The running demo actively uses **4 hackathon vendor integrations**:
+
+| Vendor | Status | Used for |
+| --- | --- | --- |
+| Bright Data | Active | Live product/search lookup and retailer price discovery |
+| Qwen Cloud | Active | Product extraction and shopper-facing recommendation explanations |
+| TokenRouter | Active/configured | LLM routing and fallback, especially intent classification |
+| Butterbase | Active | Recommendation run logging/history |
+
+Additional vendors are present as fallback or stretch paths:
+
+| Vendor | Status | Notes |
+| --- | --- | --- |
+| Z.ai | Code-supported, not currently configured | Secondary LLM fallback when `ZAI_API_KEY` is set |
+| Nosana | Credit/code present only | Optional GPU/inference stretch integration, not implemented in runtime |
+| EverOS | Mentioned only | Optional persistent memory, not implemented in runtime |
+| Zeabur | Signup/docs only | Deployment sponsor option; current deployment is Vercel |
+| Actionbook / AgentField / Qoder | Docs/tooling notes only | Not used in app runtime |
+
 ## Getting Started
 
 ```bash
