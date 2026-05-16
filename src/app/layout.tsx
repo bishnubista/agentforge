@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Moneymaker",
+  title: "Rewardr",
   description: "Wallet-aware shopping recommendations for credit card rewards."
 };
 
