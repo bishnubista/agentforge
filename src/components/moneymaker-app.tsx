@@ -13,7 +13,7 @@ const RUN_STEPS = [
   "Identifying product and specifications",
   "Scanning retailers across the web for live pricing",
   "Reading your wallet",
-  "Cross-referencing active offers and portal bonuses",
+  "Cross-referencing selected card rules and active offers",
   "Evaluating cashback and points value per retailer",
   "Scoring all options to find best effective price"
 ];
@@ -398,8 +398,8 @@ function WalletStats({ selectedCards }: { selectedCards: typeof cards }) {
             <em>cards</em>
           </strong>
           <p>
-            The agent evaluates every card on every query - category bonuses, rotating calendars, portal multipliers, and
-            active offers.
+            The agent evaluates every card on every query - category bonuses, rotating calendars, issuer offers, and
+            catch-all value.
           </p>
         </div>
         <div className={styles.issuerCount}>
@@ -409,20 +409,15 @@ function WalletStats({ selectedCards }: { selectedCards: typeof cards }) {
       </div>
       <div className={styles.walletPreview}>
         {previewCards.map((card, index) => (
-          <div
-            className={styles.walletMiniCard}
+          <CardCover
+            card={card}
             key={card.id}
+            mini
             style={{
-              background: card.art.background,
-              color: card.art.foreground,
               "--card-angle": `${(index - 1.5) * 5}deg`,
               "--card-shift": `${index * -14}px`
             } as React.CSSProperties}
-          >
-            <span>{card.issuer}</span>
-            <strong>{shortCardName(card)}</strong>
-            <em>{rewardSummary(card)}</em>
-          </div>
+          />
         ))}
       </div>
     </section>
@@ -497,10 +492,7 @@ function WalletPanel({
               type="button"
               aria-pressed={selected}
             >
-              <span className={styles.cardArt} style={{ background: card.art.background, color: card.art.foreground }}>
-                <span>{card.issuer}</span>
-                <strong>{shortCardName(card)}</strong>
-              </span>
+              <CardCover card={card} />
               <span className={styles.cardText}>
                 <strong>{shortCardName(card)}</strong>
                 <span>{card.issuer}</span>
@@ -654,8 +646,57 @@ function StatusList({
   );
 }
 
+function CardCover({
+  card,
+  mini = false,
+  style
+}: {
+  card: (typeof cards)[number];
+  mini?: boolean;
+  style?: React.CSSProperties;
+}) {
+  const coverStyle = {
+    color: card.art.foreground,
+    "--card-accent": card.art.accent ?? card.art.foreground,
+    ...style
+  } as React.CSSProperties;
+  if (card.coverImage?.src) {
+    coverStyle.backgroundImage = `url("${card.coverImage.src}")`;
+  } else {
+    coverStyle.background = card.art.background;
+  }
+
+  const className = mini ? styles.walletMiniCard : styles.cardArt;
+
+  return (
+    <span
+      className={`${className} ${card.coverImage?.src ? styles.cardArtWithImage : ""}`}
+      data-pattern={card.art.pattern}
+      role={card.coverImage?.src ? "img" : undefined}
+      aria-label={card.coverImage?.src ? card.coverImage.alt : undefined}
+      style={coverStyle}
+    >
+      {!card.coverImage?.src ? (
+        <>
+          <span>{card.issuer}</span>
+          <strong>{cardFaceName(card)}</strong>
+          {mini ? <em>{rewardSummary(card)}</em> : null}
+          <i>{card.network}</i>
+        </>
+      ) : null}
+    </span>
+  );
+}
+
 function shortCardName(card: (typeof cards)[number]) {
   return card.displayName.replace(card.issuer, "").trim().replace("Cash Back", "").trim() || card.displayName;
+}
+
+function cardFaceName(card: (typeof cards)[number]) {
+  return shortCardName(card)
+    .replace(/\s+Card$/, "")
+    .replace("Blue Cash Preferred", "Blue Cash")
+    .replace("Costco Anywhere Visa", "Costco Anywhere");
 }
 
 function rewardSummary(card: (typeof cards)[number]) {
