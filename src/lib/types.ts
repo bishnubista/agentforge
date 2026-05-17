@@ -22,9 +22,18 @@ export type Card = {
   network: string;
   pointValueCents: number;
   baseRewardRate: number;
+  coverImage?: {
+    src: string;
+    alt: string;
+    sourceName: string;
+    sourceUrl?: string;
+    licenseNote: string;
+  };
   art: {
     background: string;
     foreground: string;
+    accent?: string;
+    pattern?: "gold" | "sapphire" | "rings" | "clean" | "woven" | "wave" | "prime" | "costco" | "cash";
   };
   rewards: RewardRule[];
   portalBoosts: PortalBoost[];

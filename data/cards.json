@@ -1,16 +1,42 @@
 [
   {
     "id": "amex_gold",
-    "displayName": "American Express Gold",
+    "displayName": "American Express Gold Card",
     "issuer": "American Express",
     "network": "Amex",
     "pointValueCents": 1,
     "baseRewardRate": 1,
-    "art": { "background": "#d9b56f", "foreground": "#2b2112" },
+    "art": {
+      "background": "linear-gradient(135deg, #f8e2a0 0%, #c99532 46%, #f3d889 100%)",
+      "foreground": "#2b2112",
+      "accent": "#fff4c7",
+      "pattern": "gold"
+    },
     "rewards": [
-      { "category": "dining", "multiplier": 4, "label": "4x dining" },
-      { "category": "grocery", "multiplier": 4, "label": "4x US grocery" },
-      { "category": "flights", "multiplier": 3, "label": "3x flights" }
+      { "category": "dining", "multiplier": 4, "label": "4x restaurants worldwide", "cap": 50000, "capPeriod": "year" },
+      { "category": "grocery", "multiplier": 4, "label": "4x U.S. supermarkets", "cap": 25000, "capPeriod": "year" },
+      { "category": "flights", "multiplier": 3, "label": "3x flights direct or Amex Travel" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "amex_blue_cash_preferred",
+    "displayName": "Blue Cash Preferred Card",
+    "issuer": "American Express",
+    "network": "Amex",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": {
+      "background": "linear-gradient(135deg, #edf7ff 0%, #1780bd 48%, #0a376f 100%)",
+      "foreground": "#f7fcff",
+      "accent": "#82d4ff",
+      "pattern": "clean"
+    },
+    "rewards": [
+      { "category": "grocery", "multiplier": 6, "label": "6% U.S. supermarkets", "cap": 6000, "capPeriod": "year" },
+      { "category": "streaming", "multiplier": 6, "label": "6% select U.S. streaming" },
+      { "category": "gas", "multiplier": 3, "label": "3% U.S. gas stations" },
+      { "category": "transit", "multiplier": 3, "label": "3% transit" }
     ],
     "portalBoosts": []
   },
@@ -21,93 +47,18 @@
     "network": "Visa",
     "pointValueCents": 1.25,
     "baseRewardRate": 1,
-    "art": { "background": "#244f8f", "foreground": "#f8fbff" },
+    "art": {
+      "background": "linear-gradient(135deg, #0d2c5f 0%, #2f74bd 52%, #061a38 100%)",
+      "foreground": "#f8fbff",
+      "accent": "#79b7ff",
+      "pattern": "sapphire"
+    },
     "rewards": [
       { "category": "dining", "multiplier": 3, "label": "3x dining" },
-      { "category": "travel", "multiplier": 2, "label": "2x travel" }
-    ],
-    "portalBoosts": [
-      { "retailerId": "rei", "extraMultiplier": 4, "label": "4x Chase portal boost at REI" },
-      { "retailerId": "backcountry", "extraMultiplier": 3, "label": "3x Chase portal boost at Backcountry" }
-    ]
-  },
-  {
-    "id": "discover_it",
-    "displayName": "Discover it Cash Back",
-    "issuer": "Discover",
-    "network": "Discover",
-    "pointValueCents": 1,
-    "baseRewardRate": 1,
-    "art": { "background": "#f2a33a", "foreground": "#1f1607" },
-    "rewards": [
-      {
-        "category": "gas",
-        "multiplier": 5,
-        "label": "5% rotating gas category",
-        "cap": 1500,
-        "capPeriod": "quarter"
-      },
-      {
-        "category": "dining",
-        "multiplier": 5,
-        "label": "5% rotating restaurants",
-        "cap": 1500,
-        "capPeriod": "quarter"
-      }
-    ],
-    "portalBoosts": []
-  },
-  {
-    "id": "citi_custom_cash",
-    "displayName": "Citi Custom Cash",
-    "issuer": "Citi",
-    "network": "Mastercard",
-    "pointValueCents": 1,
-    "baseRewardRate": 1,
-    "art": { "background": "#0f6c81", "foreground": "#f8ffff" },
-    "rewards": [
-      {
-        "category": "grocery",
-        "multiplier": 5,
-        "label": "5% top eligible category",
-        "cap": 500,
-        "capPeriod": "month"
-      },
-      {
-        "category": "home_goods",
-        "multiplier": 5,
-        "label": "5% top eligible category",
-        "cap": 500,
-        "capPeriod": "month"
-      }
-    ],
-    "portalBoosts": []
-  },
-  {
-    "id": "capital_one_venture_x",
-    "displayName": "Capital One Venture X",
-    "issuer": "Capital One",
-    "network": "Visa",
-    "pointValueCents": 1,
-    "baseRewardRate": 2,
-    "art": { "background": "#20242b", "foreground": "#f7f3e9" },
-    "rewards": [
-      { "category": "travel", "multiplier": 5, "label": "5x travel portal baseline" }
-    ],
-    "portalBoosts": []
-  },
-  {
-    "id": "amazon_prime_visa",
-    "displayName": "Prime Visa",
-    "issuer": "Chase",
-    "network": "Visa",
-    "pointValueCents": 1,
-    "baseRewardRate": 1,
-    "art": { "background": "#232f3e", "foreground": "#ffffff" },
-    "rewards": [
-      { "retailerId": "amazon", "category": "any", "multiplier": 5, "label": "5% at Amazon" },
-      { "category": "gas", "multiplier": 2, "label": "2% gas" },
-      { "category": "dining", "multiplier": 2, "label": "2% dining" }
+      { "category": "grocery", "multiplier": 3, "label": "3x online grocery" },
+      { "category": "streaming", "multiplier": 3, "label": "3x select streaming" },
+      { "category": "travel", "multiplier": 2, "label": "2x other travel" },
+      { "category": "flights", "multiplier": 2, "label": "2x other travel" }
     ],
     "portalBoosts": []
   },
@@ -118,29 +69,161 @@
     "network": "Mastercard",
     "pointValueCents": 1,
     "baseRewardRate": 1,
-    "art": { "background": "#184f76", "foreground": "#f5fbff" },
+    "art": {
+      "background": "linear-gradient(135deg, #12335e 0%, #236ba6 54%, #0b1f38 100%)",
+      "foreground": "#f5fbff",
+      "accent": "#66d3ff",
+      "pattern": "rings"
+    },
     "rewards": [
-      {
-        "category": "grocery",
-        "multiplier": 5,
-        "label": "5% rotating grocery category",
-        "cap": 1500,
-        "capPeriod": "quarter"
-      },
-      { "category": "dining", "multiplier": 3, "label": "3% dining" }
+      { "category": "gas", "multiplier": 5, "label": "5% rotating category", "cap": 1500, "capPeriod": "quarter" },
+      { "category": "grocery", "multiplier": 5, "label": "5% rotating category", "cap": 1500, "capPeriod": "quarter" },
+      { "category": "dining", "multiplier": 3, "label": "3% dining" },
+      { "category": "drugstore", "multiplier": 3, "label": "3% drugstores" }
     ],
-    "portalBoosts": [
-      { "retailerId": "walmart", "extraMultiplier": 2, "label": "2x Chase shopping boost" }
-    ]
+    "portalBoosts": []
+  },
+  {
+    "id": "discover_it_cash_back",
+    "displayName": "Discover it Cash Back",
+    "issuer": "Discover",
+    "network": "Discover",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": {
+      "background": "linear-gradient(135deg, #111111 0%, #323232 52%, #f28b20 100%)",
+      "foreground": "#fff8ef",
+      "accent": "#f28b20",
+      "pattern": "rings"
+    },
+    "rewards": [
+      { "category": "gas", "multiplier": 5, "label": "5% rotating category", "cap": 1500, "capPeriod": "quarter" },
+      { "category": "grocery", "multiplier": 5, "label": "5% rotating category", "cap": 1500, "capPeriod": "quarter" },
+      { "category": "dining", "multiplier": 5, "label": "5% rotating category", "cap": 1500, "capPeriod": "quarter" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "citi_custom_cash",
+    "displayName": "Citi Custom Cash Card",
+    "issuer": "Citi",
+    "network": "Mastercard",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": {
+      "background": "linear-gradient(135deg, #0e5c93 0%, #0bb0c8 58%, #072f4f 100%)",
+      "foreground": "#f8ffff",
+      "accent": "#f04b4f",
+      "pattern": "wave"
+    },
+    "rewards": [
+      { "category": "dining", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "gas", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "grocery", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "travel", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "flights", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "transit", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "streaming", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "drugstore", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "home_goods", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" },
+      { "category": "entertainment", "multiplier": 5, "label": "5% top eligible category", "cap": 500, "capPeriod": "month" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "capital_one_savor",
+    "displayName": "Capital One Savor Rewards",
+    "issuer": "Capital One",
+    "network": "Mastercard",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": {
+      "background": "linear-gradient(135deg, #d63c2d 0%, #932f7d 46%, #3a1e63 100%)",
+      "foreground": "#fffaf5",
+      "accent": "#ffd166",
+      "pattern": "wave"
+    },
+    "rewards": [
+      { "category": "dining", "multiplier": 3, "label": "3% dining" },
+      { "category": "grocery", "multiplier": 3, "label": "3% grocery stores" },
+      { "category": "entertainment", "multiplier": 3, "label": "3% entertainment" },
+      { "category": "streaming", "multiplier": 3, "label": "3% streaming" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "capital_one_venture_x",
+    "displayName": "Capital One Venture X",
+    "issuer": "Capital One",
+    "network": "Visa",
+    "pointValueCents": 1,
+    "baseRewardRate": 2,
+    "art": {
+      "background": "linear-gradient(135deg, #12151a 0%, #3b424d 55%, #080a0d 100%)",
+      "foreground": "#f7f3e9",
+      "accent": "#c6a76d",
+      "pattern": "woven"
+    },
+    "rewards": [],
+    "portalBoosts": []
+  },
+  {
+    "id": "prime_visa",
+    "displayName": "Prime Visa",
+    "issuer": "Chase",
+    "network": "Visa",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": {
+      "background": "linear-gradient(135deg, #101820 0%, #232f3e 56%, #080b0e 100%)",
+      "foreground": "#ffffff",
+      "accent": "#ff9900",
+      "pattern": "prime"
+    },
+    "rewards": [
+      { "retailerId": "amazon", "category": "any", "multiplier": 5, "label": "5% at Amazon with Prime" },
+      { "retailerId": "whole_foods", "category": "any", "multiplier": 5, "label": "5% at Whole Foods with Prime" },
+      { "category": "gas", "multiplier": 2, "label": "2% gas stations" },
+      { "category": "dining", "multiplier": 2, "label": "2% restaurants" },
+      { "category": "transit", "multiplier": 2, "label": "2% local transit" }
+    ],
+    "portalBoosts": []
+  },
+  {
+    "id": "costco_anywhere_visa",
+    "displayName": "Costco Anywhere Visa Card",
+    "issuer": "Citi",
+    "network": "Visa",
+    "pointValueCents": 1,
+    "baseRewardRate": 1,
+    "art": {
+      "background": "linear-gradient(135deg, #f9fbff 0%, #d9e7f6 50%, #f7f7f7 100%)",
+      "foreground": "#102b45",
+      "accent": "#e31b23",
+      "pattern": "costco"
+    },
+    "rewards": [
+      { "retailerId": "costco", "category": "any", "multiplier": 2, "label": "2% at Costco" },
+      { "category": "gas", "multiplier": 4, "label": "4% gas and EV charging", "cap": 7000, "capPeriod": "year" },
+      { "category": "dining", "multiplier": 3, "label": "3% restaurants" },
+      { "category": "travel", "multiplier": 3, "label": "3% eligible travel" },
+      { "category": "flights", "multiplier": 3, "label": "3% eligible travel" }
+    ],
+    "portalBoosts": []
   },
   {
     "id": "wells_fargo_active_cash",
-    "displayName": "Wells Fargo Active Cash",
+    "displayName": "Wells Fargo Active Cash Card",
     "issuer": "Wells Fargo",
     "network": "Visa",
     "pointValueCents": 1,
     "baseRewardRate": 2,
-    "art": { "background": "#a32120", "foreground": "#fff7ed" },
+    "art": {
+      "background": "linear-gradient(135deg, #7f1519 0%, #c41f32 48%, #3b0a0c 100%)",
+      "foreground": "#fff7ed",
+      "accent": "#f3c45d",
+      "pattern": "cash"
+    },
     "rewards": [],
     "portalBoosts": []
   }

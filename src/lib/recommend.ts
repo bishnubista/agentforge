@@ -58,7 +58,7 @@ export async function recommend({ query, selectedCardIds, requestId }: Recommend
     const product = productForCardPickIntent(intent);
     statusLog.push("Skipped live product lookup for merchant/category card-pick intent");
     statusLog.push(`Using ${formatCurrency(CARD_PICK_BENCHMARK_SPEND)} benchmark spend to compare selected-card value`);
-    statusLog.push("Applying card rewards, issuer offers, and portal boosts");
+    statusLog.push("Applying card rewards and issuer offers");
 
     const scored = scoreCardPickIntent({
       intent,
@@ -162,7 +162,7 @@ export async function recommend({ query, selectedCardIds, requestId }: Recommend
     demoMode: retailerSearch.demoMode
   });
 
-  statusLog.push("Applying card rewards, issuer offers, and portal boosts");
+  statusLog.push("Applying card rewards and issuer offers");
   const scored = scoreOptions({
     product: identified.product,
     retailerOffers: retailerSearch.offers,

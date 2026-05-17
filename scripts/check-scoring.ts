@@ -25,9 +25,9 @@ const results = scoreOptions({
 }).slice(0, 3);
 
 assertEqual(results.length, 3, "expected three top results");
-assertEqual(results[0]?.retailerId, "backcountry", "expected Backcountry to win demo scenario");
-assertEqual(results[0]?.cardId, "chase_sapphire_preferred", "expected CSP to win demo scenario");
-assertEqual(results[0]?.effectivePrice, 183.55, "expected hand-checked winning effective price");
+assertEqual(results[0]?.retailerId, "rei", "expected REI to win demo scenario");
+assertEqual(results[0]?.cardId, "amex_gold", "expected Amex Gold to win demo scenario");
+assertEqual(results[0]?.effectivePrice, 184.04, "expected hand-checked winning effective price");
 
 for (const result of results) {
   const lineItemTotal = result.lineItems.reduce((total, item) => total + item.amount, 0);
@@ -52,7 +52,7 @@ assert(
   "expired issuer offers must not affect scoring"
 );
 
-const discover = cards.find((card) => card.id === "discover_it");
+const discover = cards.find((card) => card.id === "discover_it_cash_back");
 assert(discover, "Discover it card must exist for cap test");
 
 const gasProduct: Product = {
